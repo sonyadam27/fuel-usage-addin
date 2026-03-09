@@ -1,0 +1,20 @@
+{
+  "name": "Fuel Usage Per Day",
+  "supportEmail": "support@sasa-inti.com",
+  "version": "1.0.0",
+  "items": [
+    {
+      "url": "fuel-usage-addin/index.html",
+      "path": "EngineMaintenanceLink/",
+      "menuName": {
+        "en": "Fuel Usage Per Day"
+      },
+      "icon": "https://cdn-icons-png.flaticon.com/512/2933/2933054.png"
+    }
+  ],
+  "isSigned": false,
+  "files": {
+    "css": "",
+    "js": ""
+  }
+}

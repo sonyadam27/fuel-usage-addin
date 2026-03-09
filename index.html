@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Usage Per Day</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="fuel-addin-container">
+        <h1>Fuel Usage Per Day — All Vehicles</h1>
+        <p class="subtitle">Database: <strong>sasa_inti</strong></p>
+
+        <!-- Date Range Picker -->
+        <div class="controls">
+            <div class="date-group">
+                <label for="fromDate">From:</label>
+                <input type="date" id="fromDate">
+            </div>
+            <div class="date-group">
+                <label for="toDate">To:</label>
+                <input type="date" id="toDate">
+            </div>
+            <button id="btnLoad" class="btn-primary">Load Data</button>
+            <button id="btnExport" class="btn-secondary">Export CSV</button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards" id="summaryCards" style="display:none;">
+            <div class="card">
+                <div class="card-label">Total Vehicles</div>
+                <div class="card-value" id="totalVehicles">0</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Fuel Used (L)</div>
+                <div class="card-value" id="totalFuel">0</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Avg Fuel/Vehicle/Day (L)</div>
+                <div class="card-value" id="avgFuel">0</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Idle Fuel (L)</div>
+                <div class="card-value" id="totalIdleFuel">0</div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>Loading fuel data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+        <!-- Results Table -->
+        <div id="tableWrapper" style="display:none;">
+            <table id="fuelTable">
+                <thead>
+                    <tr>
+                        <th>Vehicle Name</th>
+                        <th>Date</th>
+                        <th>Total Fuel Used (L)</th>
+                        <th>Idle Fuel Used (L)</th>
+                        <th>Driving Fuel Used (L)</th>
+                    </tr>
+                </thead>
+                <tbody id="fuelTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
