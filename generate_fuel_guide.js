@@ -406,11 +406,16 @@ const doc = new Document({
 
       heading2("6.1 Add-In Lifecycle"),
       para("The add-in follows the standard MyGeotab add-in lifecycle pattern:"),
-      bulletItem("initialize(api, state, callback) \u2014 called once when the add-in first loads. Sets default dates, binds button events, calls callback() to signal ready."),
+      bulletItem("initialize(api, state, callback) \u2014 called once when the add-in first loads. Detects the database name from the URL, sets default dates, binds button events, calls callback() to signal ready."),
       bulletItem("focus(api, state) \u2014 called each time the user navigates to the add-in page. Auto-triggers loadFuelData() to refresh data."),
       bulletItem("blur() \u2014 called when the user navigates away. Currently a no-op."),
 
-      heading2("6.2 Data Flow"),
+      heading2("6.2 Dynamic Database Detection"),
+      para("The add-in automatically detects the current database name from the MyGeotab URL path using the pattern:"),
+      codePara("window.location.pathname.match(/\\/([^\\/]+)\\//)"),
+      para("This extracts the database name (e.g., \"Travl\", \"sasa_inti\", \"alamui_indonesia\") from URLs like https://my.geotab.com/Travl/#addin-... and displays it in the page subtitle. The same detection is used for the CSV export filename, producing files like fuel_usage_per_day_Travl.csv."),
+
+      heading2("6.3 Data Flow"),
       numberedItem("loadFuelData() validates date inputs and shows loading spinner", "numbers6"),
       numberedItem("loadDevices() calls api.call(\"Get\", {typeName: \"Device\"}) to cache all vehicle names by ID", "numbers6"),
       numberedItem("api.call(\"Get\", {typeName: \"FuelUsed\", search: {fromDate, toDate}}) retrieves fuel records", "numbers6"),
@@ -419,7 +424,7 @@ const doc = new Document({
       numberedItem("Computes summary statistics (unique vehicles, totals, averages)", "numbers6"),
       numberedItem("renderTable() builds HTML table rows and displays them", "numbers6"),
 
-      heading2("6.3 CSV Export"),
+      heading2("6.4 CSV Export"),
       para("The exportCsv() function iterates through the rendered HTML table, extracts all cell text content, escapes double quotes, wraps each value in quotes, and downloads as fuel_usage_per_day_[database].csv (database name auto-detected from URL)."),
 
       // ==================== 7. TROUBLESHOOTING ====================
