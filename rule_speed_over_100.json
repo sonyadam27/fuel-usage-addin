@@ -1,0 +1,29 @@
+{
+  "name": "Speed Over 100",
+  "comment": "Triggers when vehicle speed exceeds 100 km/h. Sends web request to disable relay.",
+  "baseType": "Custom",
+  "activeFrom": "2020-01-01T00:00:00.000Z",
+  "activeTo": "2050-01-01T00:00:00.000Z",
+  "groups": [
+    {
+      "id": "GroupCompanyId"
+    }
+  ],
+  "condition": {
+    "conditionType": "IsValueMoreThan",
+    "children": [
+      {
+        "conditionType": "Speed",
+        "value": 0
+      }
+    ],
+    "value": 100
+  },
+  "color": {
+    "r": 220,
+    "g": 53,
+    "b": 69,
+    "a": 255
+  },
+  "state": "ExceptionRuleStateActiveId"
+}
