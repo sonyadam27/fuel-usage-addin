@@ -209,7 +209,9 @@ geotab.addin.fuelUsagePerDay = function () {
         var url = URL.createObjectURL(blob);
         var link = document.createElement("a");
         link.href = url;
-        link.download = "fuel_usage_per_day_sasa_inti.csv";
+        var dbMatch = window.location.pathname.match(/\/([^\/]+)\//);
+        var dbName = dbMatch ? dbMatch[1] : "export";
+        link.download = "fuel_usage_per_day_" + dbName + ".csv";
         link.click();
         URL.revokeObjectURL(url);
     }
@@ -219,6 +221,11 @@ geotab.addin.fuelUsagePerDay = function () {
         initialize: function (freshApi, freshState, callback) {
             api = freshApi;
             state = freshState;
+
+            // Detect database name from URL
+            var dbMatch = window.location.pathname.match(/\/([^\/]+)\//);
+            var dbName = dbMatch ? dbMatch[1] : "Unknown";
+            $("dbName").textContent = dbName;
 
             // Set default dates
             setDefaultDates();
