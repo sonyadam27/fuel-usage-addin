@@ -1,3 +1,24 @@
 node_modules/
 ~$*.docx
 *.png
+
+# Temp/debug files from add-in troubleshooting
+_temp_*.json
+check_*.js
+find_*.js
+get_api.js
+extract_session.js
+intercept_*.js
+click_addin_btn.js
+open_and_upload.js
+paste_config.js
+read_textarea.js
+step*.js
+step*.txt
+*_b64.txt
+trace.txt
+trace_err.txt
+current_settings*.json
+modified_settings.json
+ss_current.json
+fuel_usage_addin.zip

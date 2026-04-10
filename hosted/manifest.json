@@ -1,0 +1,19 @@
+{
+  "name": "Fuel Usage Per Day",
+  "supportEmail": "sonyadam@geotab.com",
+  "version": "1.0.0",
+  "items": [
+    {
+      "url": "customPage.html",
+      "path": "EngineMaintenanceLink/",
+      "menuName": {
+        "en": "Fuel Usage Per Day"
+      }
+    }
+  ],
+  "files": {
+    "customPage.html": "",
+    "customPage.js": "",
+    "customPage.css": ""
+  }
+}
