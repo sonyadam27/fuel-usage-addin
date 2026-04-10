@@ -1,0 +1,15 @@
+{
+  "name": "Fuel Usage Per Day",
+  "supportEmail": "sonyadam@geotab.com",
+  "version": "1.0.0",
+  "isSigned": false,
+  "items": [
+    {
+      "url": "https://sonyadam27.github.io/fuel-usage-addin/addin_files/customPage.html",
+      "path": "EngineMaintenanceLink/",
+      "menuName": {
+        "en": "Fuel Usage Per Day"
+      }
+    }
+  ]
+}
