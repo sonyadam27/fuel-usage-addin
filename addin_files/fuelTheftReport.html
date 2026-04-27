@@ -1,0 +1,491 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Fuel Theft Report</title><style>
+#ftr-container{font-family:Arial,Helvetica,sans-serif!important;max-width:1600px;margin:0 auto;padding:20px;color:#333!important;box-sizing:border-box}
+#ftr-container h1{font-size:22px!important;margin:0 0 4px!important;color:#1a1a2e!important;font-weight:700!important}
+#ftr-container .subtitle{font-size:14px!important;color:#666!important;margin:0 0 20px!important}
+#ftr-container .controls{display:flex!important;align-items:center!important;gap:10px!important;margin-bottom:16px!important;flex-wrap:wrap!important}
+#ftr-container .ctrl-label{font-size:14px!important;color:#333!important;white-space:nowrap!important;font-weight:normal!important}
+#ftr-container .controls input[type=date],#ftr-container .controls select{padding:7px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:14px!important;color:#333!important;background:#fff!important;display:inline-block!important}
+#ftr-container .controls select{min-width:150px!important}
+#ftr-container .btn-primary{padding:8px 20px!important;background-color:#007bff!important;color:#fff!important;border:none!important;border-radius:4px!important;font-size:14px!important;cursor:pointer!important;font-weight:600!important;white-space:nowrap!important}
+#ftr-container .btn-primary:hover{background-color:#0056b3!important}
+#ftr-container .btn-primary:disabled{background-color:#6c757d!important;cursor:not-allowed!important}
+#ftr-container .btn-secondary{padding:8px 20px!important;background-color:#28a745!important;color:#fff!important;border:none!important;border-radius:4px!important;font-size:14px!important;cursor:pointer!important;font-weight:600!important;white-space:nowrap!important}
+#ftr-container .btn-secondary:hover{background-color:#1e7e34!important}
+#ftr-container .btn-toggle{padding:6px 14px!important;background:#f0f0f0!important;color:#555!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important;cursor:pointer!important;margin-bottom:16px!important;display:inline-block!important}
+#ftr-container .adv-panel{display:none;background:#f8f9fa!important;border:1px solid #e0e0e0!important;border-radius:6px!important;padding:16px!important;margin-bottom:16px!important;gap:16px!important;flex-wrap:wrap!important}
+#ftr-container .adv-panel.show{display:flex!important}
+#ftr-container .adv-ctrl{display:flex!important;flex-direction:column!important;gap:4px!important}
+#ftr-container .adv-ctrl label{font-size:13px!important;font-weight:600!important;color:#555!important}
+#ftr-container .adv-ctrl input{padding:7px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:14px!important;width:100px!important;box-sizing:border-box!important}
+#ftr-container .adv-ctrl input.diag-input{width:280px!important}
+#ftr-container .progress-area{margin-bottom:16px}
+#ftr-container .progress-bar-outer{height:8px!important;background:#e0e0e0!important;border-radius:4px!important;overflow:hidden!important;margin-top:6px!important}
+#ftr-container .progress-bar-inner{height:100%!important;background:#dc3545!important;border-radius:4px!important;transition:width .3s!important}
+#ftr-container .progress-text{font-size:13px!important;color:#666!important}
+#ftr-container .summary-cards{display:flex!important;gap:16px!important;margin-bottom:20px!important;flex-wrap:wrap!important}
+#ftr-container .card{flex:1!important;min-width:155px!important;background:#fff!important;border:1px solid #ddd!important;border-radius:6px!important;padding:18px 16px!important;text-align:center!important;box-sizing:border-box!important}
+#ftr-container .card-label{font-size:11px!important;color:#999!important;text-transform:uppercase!important;letter-spacing:.5px!important;margin-bottom:8px!important;display:block!important}
+#ftr-container .card-value{font-size:30px!important;font-weight:700!important;color:#1a1a2e!important;display:block!important}
+#ftr-container .card-value.danger{color:#dc3545!important}
+#ftr-container .group-controls{display:flex!important;align-items:center!important;gap:12px!important;margin-bottom:16px!important}
+#ftr-container .group-controls label{font-size:13px!important;font-weight:600!important;color:#555!important}
+#ftr-container .group-controls select{padding:6px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important}
+#ftr-container .error-msg{background:#f8d7da!important;color:#842029!important;border:1px solid #f5c2c7!important;border-radius:4px!important;padding:12px 16px!important;margin-bottom:16px!important}
+#ftr-container .warn-msg{background:#fff3cd!important;color:#664d03!important;border:1px solid #ffecb5!important;border-radius:4px!important;padding:10px 14px!important;margin-bottom:16px!important}
+#ftr-container #ftr-loading{text-align:center!important;padding:40px!important;color:#666!important}
+#ftr-container .spinner{width:40px!important;height:40px!important;border:4px solid #e0e0e0!important;border-top-color:#dc3545!important;border-radius:50%!important;animation:spin .8s linear infinite!important;margin:0 auto 12px!important}
+@keyframes spin{to{transform:rotate(360deg)}}
+#ftr-container #ftr-tableWrapper{overflow-x:auto}
+#ftr-container #ftr-resultTable{width:100%!important;border-collapse:collapse!important;font-size:12px!important}
+#ftr-container #ftr-resultTable th{background-color:#1a1a2e!important;color:#fff!important;padding:8px 10px!important;text-align:left!important;font-weight:600!important;position:sticky!important;top:0!important;white-space:nowrap!important}
+#ftr-container #ftr-resultTable td{padding:6px 10px!important;border-bottom:1px solid #e0e0e0!important;white-space:nowrap!important;color:#333!important}
+#ftr-container #ftr-resultTable tbody tr:hover td{background-color:#fff5f5!important}
+#ftr-container #ftr-resultTable tbody tr:nth-child(even) td{background-color:#fafafa!important}
+#ftr-container #ftr-resultTable tbody tr:nth-child(even):hover td{background-color:#fff5f5!important}
+#ftr-container .theft-val{color:#dc3545!important;font-weight:700!important}
+#ftr-container .group-header td{background:#e8ecf0!important;font-weight:700!important;font-size:13px!important;padding:10px!important}
+#ftr-container .btn-verify{padding:3px 10px!important;background:#17a2b8!important;color:#fff!important;border:none!important;border-radius:3px!important;font-size:11px!important;cursor:pointer!important;white-space:nowrap!important;text-decoration:none!important;display:inline-block!important}
+#ftr-container .btn-verify:hover{background:#138496!important;color:#fff!important}
+#ftr-container #ftr-summaryTableWrapper{margin-top:24px}
+#ftr-container #ftr-summaryTableWrapper h3{font-size:16px!important;color:#1a1a2e!important;margin-bottom:10px!important}
+#ftr-container #ftr-summaryTable{width:auto!important;border-collapse:collapse!important;font-size:13px!important}
+#ftr-container #ftr-summaryTable th{background-color:#1a1a2e!important;color:#fff!important;padding:8px 14px!important;text-align:left!important;font-weight:600!important}
+#ftr-container #ftr-summaryTable td{padding:6px 14px!important;border-bottom:1px solid #e0e0e0!important;color:#333!important}
+#ftr-container #ftr-summaryTable tbody tr:hover td{background-color:#fff5f5!important}
+#ftr-container #ftr-summaryTable .theft-val{color:#dc3545!important;font-weight:700!important}
+</style></head><body><div id="ftr-container">
+<h1>Fuel Theft Report &mdash; All Vehicles</h1>
+<p class="subtitle">Database: <strong id="ftr-dbName">&mdash;</strong> &nbsp;|&nbsp; High-confidence siphoning events (ignition-off fuel drop)</p>
+<div class="controls">
+  <span class="ctrl-label">From:</span><input type="date" id="ftr-fromDate">
+  <span class="ctrl-label">To:</span><input type="date" id="ftr-toDate">
+  <span class="ctrl-label">Vehicle:</span><select id="ftr-vehicleSelect"><option value="__all__">All Vehicles</option></select>
+  <button id="ftr-btnRun" class="btn-primary">Run Detection</button>
+  <button id="ftr-btnExport" class="btn-secondary" style="display:none">Export CSV</button>
+</div>
+<div><button id="ftr-btnAdvToggle" class="btn-toggle">Advanced Settings</button></div>
+<div id="ftr-advPanel" class="adv-panel">
+  <div class="adv-ctrl"><label>Min Decrease (%)</label><input type="number" id="ftr-paramMinDecrease" value="10" min="1" max="80"></div>
+  <div class="adv-ctrl"><label>Min Off (minutes)</label><input type="number" id="ftr-paramMinOff" value="5" min="1" max="60"></div>
+  <div class="adv-ctrl"><label>Cluster Gap (min)</label><input type="number" id="ftr-paramClusterGap" value="15" min="5" max="60"></div>
+  <div class="adv-ctrl"><label>Sample Size</label><input type="number" id="ftr-paramSampleSize" value="5" min="2" max="20"></div>
+  <div class="adv-ctrl"><label>Fuel Tap Diagnostic ID</label><input type="text" id="ftr-paramDiagId" value="aFzVpeQqXskGNRmG8avPJ9Q" class="diag-input"></div>
+</div>
+<div id="ftr-progressArea" class="progress-area" style="display:none">
+  <p class="progress-text" id="ftr-progressText">Loading...</p>
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="ftr-progressBar" style="width:0%"></div></div>
+</div>
+<div id="ftr-errorMsg" class="error-msg" style="display:none"></div>
+<div id="ftr-warnMsg" class="warn-msg" style="display:none"></div>
+<div id="ftr-summaryCards" class="summary-cards" style="display:none">
+  <div class="card"><span class="card-label">Theft Events</span><span class="card-value danger" id="ftr-statTotal">0</span></div>
+  <div class="card"><span class="card-label">Vehicles Affected</span><span class="card-value danger" id="ftr-statVehicles">0</span></div>
+  <div class="card"><span class="card-label">Total Est. Stolen (L)</span><span class="card-value danger" id="ftr-statTotalStolen">0</span></div>
+  <div class="card"><span class="card-label">Avg Stolen / Event (L)</span><span class="card-value" id="ftr-statAvgStolen">0</span></div>
+  <div class="card"><span class="card-label">Avg Fuel Drop</span><span class="card-value" id="ftr-statAvgDrop">0%</span></div>
+</div>
+<div id="ftr-groupControls" class="group-controls" style="display:none">
+  <label for="ftr-groupBy">Group by:</label>
+  <select id="ftr-groupBy"><option value="none">None</option><option value="vehicle">Vehicle</option><option value="month">Month</option></select>
+</div>
+<div id="ftr-loading" style="display:none"><div class="spinner"></div><p>Processing data &mdash; please wait...</p></div>
+<div id="ftr-tableWrapper" style="display:none">
+  <table id="ftr-resultTable">
+    <thead><tr>
+      <th>#</th><th>Vehicle</th><th>VIN</th><th>Tank (L)</th>
+      <th>Ign Off (Local)</th><th>Ign On (Local)</th><th>Off Duration</th>
+      <th>Before %</th><th>After %</th><th>Decrease %</th><th>Est. Stolen (L)</th>
+      <th>GPS Location</th><th>Verify</th>
+    </tr></thead>
+    <tbody id="ftr-resultBody"></tbody>
+  </table>
+</div>
+<div id="ftr-summaryTableWrapper" style="display:none">
+  <h3>Per-Vehicle Summary</h3>
+  <table id="ftr-summaryTable">
+    <thead><tr><th>Vehicle</th><th>VIN</th><th>Theft Events</th><th>Total Est. Stolen (L)</th><th>Avg Decrease %</th><th>Max Decrease %</th></tr></thead>
+    <tbody id="ftr-summaryBody"></tbody>
+  </table>
+</div>
+</div>
+<script>
+geotab.addin.fuelTheftReport = function () {
+  "use strict";
+  var api, state, dbName = "";
+  var allDevices = {}, allThefts = [];
+  var LOCAL_OFFSET_MS = 7 * 3600 * 1000;
+
+  function $(id) { return document.getElementById(id); }
+  function showError(msg) { var el = $("ftr-errorMsg"); el.style.display = msg ? "block" : "none"; if (msg) el.textContent = msg; }
+  function showWarn(msg) { var el = $("ftr-warnMsg"); el.style.display = msg ? "block" : "none"; if (msg) el.textContent = msg; }
+  function escapeHtml(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+  function formatDateInput(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function toLocal(utcDate) { return new Date(utcDate.getTime() + LOCAL_OFFSET_MS); }
+  function fmtDate(d) { var l = toLocal(d); return l.getUTCFullYear() + "-" + String(l.getUTCMonth() + 1).padStart(2, "0") + "-" + String(l.getUTCDate()).padStart(2, "0"); }
+  function fmtTime(d) { var l = toLocal(d); return String(l.getUTCHours()).padStart(2, "0") + ":" + String(l.getUTCMinutes()).padStart(2, "0"); }
+  function fmtDT(d) { return fmtDate(d) + " " + fmtTime(d); }
+  function fmtDur(min) { return min >= 60 ? (min / 60).toFixed(1) + "h" : Math.round(min) + "m"; }
+  function monthKey(d) { var l = toLocal(d); return l.getUTCFullYear() + "-" + String(l.getUTCMonth() + 1).padStart(2, "0"); }
+  function monthLabel(k) { var p = k.split("-"); return ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][parseInt(p[1])] + " " + p[0]; }
+
+  function setDefaultDates() {
+    var today = new Date(), ago = new Date();
+    ago.setDate(today.getDate() - 30);
+    $("ftr-toDate").value = formatDateInput(today);
+    $("ftr-fromDate").value = formatDateInput(ago);
+  }
+
+  function updateProgress(cur, total, name) {
+    $("ftr-progressArea").style.display = "block";
+    $("ftr-progressText").textContent = "Loading vehicle " + cur + " of " + total + ": " + name + "...";
+    $("ftr-progressBar").style.width = Math.round(cur / total * 100) + "%";
+  }
+  function hideProgress() { $("ftr-progressArea").style.display = "none"; }
+
+  function getParams() {
+    return {
+      minDecrease: parseFloat($("ftr-paramMinDecrease").value) || 10,
+      minOffMinutes: parseFloat($("ftr-paramMinOff").value) || 5,
+      clusterGapMinutes: parseFloat($("ftr-paramClusterGap").value) || 15,
+      sampleSize: parseInt($("ftr-paramSampleSize").value) || 5,
+      fuelDiagId: $("ftr-paramDiagId").value.trim() || "aFzVpeQqXskGNRmG8avPJ9Q"
+    };
+  }
+
+  function buildMyGLink(deviceId, offStart, offEnd) {
+    var s = new Date(offStart.getTime() - 30 * 60000).toISOString();
+    var e = new Date(offEnd.getTime() + 30 * 60000).toISOString();
+    return "https://my.geotab.com/" + dbName + "/#engineDataProfile,dateRange:(endDate:'" + e + "',startDate:'" + s + "'),devices:!(" + deviceId + "),diagnostics:!(DiagnosticFuelUnitsId,DiagnosticIgnitionId,DiagnosticFuelLevelId,DiagnosticOdometerId),showVehicleSpeed:!t";
+  }
+
+  function fmtGPS(lat, lon) {
+    if (lat == null || lon == null) return "N/A";
+    var latStr = Math.abs(lat).toFixed(4) + (lat >= 0 ? "°N" : "°S");
+    var lonStr = Math.abs(lon).toFixed(4) + (lon >= 0 ? "°E" : "°W");
+    return latStr + ", " + lonStr;
+  }
+
+  function getAllStatusData(deviceId, diagId, from, to, callback, acc) {
+    if (!acc) acc = [];
+    api.call("Get", { typeName: "StatusData", search: { deviceSearch: { id: deviceId }, diagnosticSearch: { id: diagId }, fromDate: from, toDate: to }, resultsLimit: 50000 },
+      function (res) {
+        if (!res || res.length === 0) { callback(acc); return; }
+        var merged = acc.concat(res);
+        if (res.length >= 50000) {
+          var next = new Date(new Date(res[res.length - 1].dateTime).getTime() + 1).toISOString();
+          getAllStatusData(deviceId, diagId, next, to, callback, merged);
+        } else { callback(merged); }
+      }, function (err) { console.error("StatusData error:", err); callback(acc); });
+  }
+
+  function buildOffPeriods(ignData) {
+    var events = [];
+    for (var i = 0; i < ignData.length; i++) {
+      var dt = new Date(ignData[i].dateTime), val = Math.round(ignData[i].data);
+      if (!isNaN(dt.getTime()) && (val === 0 || val === 1)) events.push({ dt: dt, val: val });
+    }
+    events.sort(function (a, b) { return a.dt - b.dt; });
+    var periods = [], offStart = null;
+    for (var i = 0; i < events.length; i++) {
+      if (events[i].val === 0) { offStart = events[i].dt; }
+      else if (events[i].val === 1 && offStart) { periods.push({ offStart: offStart, offEnd: events[i].dt }); offStart = null; }
+    }
+    if (offStart) periods.push({ offStart: offStart, offEnd: new Date(2099, 0, 1) });
+    return periods;
+  }
+
+  function overlapsOff(gapStart, gapEnd, offPeriods, minOffMin) {
+    for (var i = 0; i < offPeriods.length; i++) {
+      var p = offPeriods[i];
+      var dur = (p.offEnd - p.offStart) / 60000;
+      if (dur < minOffMin) continue;
+      var oS = Math.max(gapStart.getTime(), p.offStart.getTime());
+      var oE = Math.min(gapEnd.getTime(), p.offEnd.getTime());
+      if (oS < oE) return { found: true, offStart: p.offStart, offEnd: p.offEnd, offDurMin: Math.round(dur * 10) / 10 };
+    }
+    return { found: false };
+  }
+
+  function detectThefts(fuelData, ignData, params) {
+    var readings = [];
+    for (var i = 0; i < fuelData.length; i++) {
+      var dt = new Date(fuelData[i].dateTime), val = fuelData[i].data;
+      if (!isNaN(dt.getTime()) && typeof val === "number") readings.push({ dt: dt, val: val });
+    }
+    readings.sort(function (a, b) { return a.dt - b.dt; });
+    var offPeriods = buildOffPeriods(ignData);
+    if (readings.length < 10 || !offPeriods.length) return [];
+    var clusters = [], cur = [readings[0]];
+    for (var i = 1; i < readings.length; i++) {
+      if ((readings[i].dt - readings[i - 1].dt) / 60000 <= params.clusterGapMinutes) { cur.push(readings[i]); }
+      else { clusters.push(cur); cur = [readings[i]]; }
+    }
+    clusters.push(cur);
+    var thefts = [];
+    for (var i = 0; i < clusters.length - 1; i++) {
+      var prev = clusters[i], next = clusters[i + 1];
+      var gapStart = prev[prev.length - 1].dt, gapEnd = next[0].dt;
+      var ov = overlapsOff(gapStart, gapEnd, offPeriods, params.minOffMinutes);
+      if (!ov.found) continue;
+      var tail = prev.slice(Math.max(0, prev.length - params.sampleSize));
+      var head = next.slice(0, Math.min(params.sampleSize, next.length));
+      var before = tail.reduce(function (s, r) { return s + r.val; }, 0) / tail.length;
+      var after = head.reduce(function (s, r) { return s + r.val; }, 0) / head.length;
+      var drop = before - after;
+      if (drop >= params.minDecrease) {
+        thefts.push({
+          dt: gapEnd, beforePct: Math.round(before * 10) / 10, afterPct: Math.round(after * 10) / 10,
+          decreasePct: Math.round(drop * 10) / 10, offStart: ov.offStart, offEnd: ov.offEnd,
+          offDurMin: ov.offDurMin, lat: null, lon: null
+        });
+      }
+    }
+    return thefts;
+  }
+
+  function fetchGPSForThefts(thefts, done) {
+    var byDevice = {};
+    for (var i = 0; i < thefts.length; i++) {
+      var t = thefts[i];
+      if (!byDevice[t.vehicleId]) byDevice[t.vehicleId] = [];
+      byDevice[t.vehicleId].push(t);
+    }
+    var devIds = Object.keys(byDevice), idx = 0;
+    function next() {
+      if (idx >= devIds.length) { done(); return; }
+      var devId = devIds[idx++];
+      var events = byDevice[devId];
+      var minT = events[0].offStart, maxT = events[0].offEnd;
+      for (var i = 1; i < events.length; i++) {
+        if (events[i].offStart < minT) minT = events[i].offStart;
+        if (events[i].offEnd > maxT) maxT = events[i].offEnd;
+      }
+      var from = new Date(minT.getTime() - 30 * 60000).toISOString();
+      var to = new Date(maxT.getTime() + 30 * 60000).toISOString();
+      api.call("Get", { typeName: "LogRecord", search: { deviceSearch: { id: devId }, fromDate: from, toDate: to }, resultsLimit: 500 },
+        function (records) {
+          records = records || [];
+          for (var i = 0; i < events.length; i++) {
+            var target = events[i].offStart.getTime(), best = null, bestDiff = Infinity;
+            for (var j = 0; j < records.length; j++) {
+              var diff = Math.abs(new Date(records[j].dateTime).getTime() - target);
+              if (diff < bestDiff) { bestDiff = diff; best = records[j]; }
+            }
+            if (best) { events[i].lat = best.latitude; events[i].lon = best.longitude; }
+          }
+          next();
+        }, function () { next(); });
+    }
+    next();
+  }
+
+  function loadDevices(callback) {
+    api.call("Get", { typeName: "Device" }, function (devices) {
+      allDevices = {};
+      var sel = $("ftr-vehicleSelect");
+      sel.innerHTML = '<option value="__all__">All Vehicles</option>';
+      devices.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+      for (var i = 0; i < devices.length; i++) {
+        var d = devices[i];
+        allDevices[d.id] = { id: d.id, name: d.name || d.serialNumber || d.id, vin: d.vin || "", tankL: d.fuelTankCapacity || 0 };
+        var opt = document.createElement("option"); opt.value = d.id; opt.textContent = d.name || d.serialNumber || d.id;
+        sel.appendChild(opt);
+      }
+      callback();
+    }, function (err) { showError("Failed to load vehicles: " + err.message); });
+  }
+
+  function runDetection() {
+    showError(null); showWarn(null);
+    $("ftr-summaryCards").style.display = "none";
+    $("ftr-groupControls").style.display = "none";
+    $("ftr-tableWrapper").style.display = "none";
+    $("ftr-summaryTableWrapper").style.display = "none";
+    $("ftr-btnExport").style.display = "none";
+    var from = $("ftr-fromDate").value, to = $("ftr-toDate").value;
+    if (!from || !to) { showError("Please select both From and To dates."); return; }
+    if (new Date(from) > new Date(to)) { showError("From date must be before To date."); return; }
+    var params = getParams();
+    var vehicleVal = $("ftr-vehicleSelect").value;
+    var deviceIds = vehicleVal === "__all__" ? Object.keys(allDevices) : [vehicleVal];
+    if (!deviceIds.length) { showError("No vehicles found."); return; }
+    $("ftr-btnRun").disabled = true;
+    $("ftr-loading").style.display = "block";
+    allThefts = [];
+    var warnings = [], idx = 0;
+    var fromISO = from + "T00:00:00.000Z", toISO = to + "T23:59:59.999Z";
+    function processNext() {
+      if (idx >= deviceIds.length) {
+        hideProgress();
+        if (!allThefts.length) {
+          $("ftr-loading").style.display = "none";
+          $("ftr-btnRun").disabled = false;
+          if (warnings.length) showWarn(warnings.join(" | "));
+          showError("No fuel theft events detected for the selected parameters.");
+          return;
+        }
+        $("ftr-progressText").textContent = "Fetching GPS locations for theft events...";
+        fetchGPSForThefts(allThefts, function () {
+          hideProgress();
+          $("ftr-loading").style.display = "none";
+          $("ftr-btnRun").disabled = false;
+          if (warnings.length) showWarn(warnings.join(" | "));
+          renderResults();
+        });
+        return;
+      }
+      var devId = deviceIds[idx], dev = allDevices[devId]; idx++;
+      updateProgress(idx, deviceIds.length, dev ? dev.name : "...");
+      getAllStatusData(devId, params.fuelDiagId, fromISO, toISO, function (fuelData) {
+        if (!fuelData || !fuelData.length) { warnings.push((dev ? dev.name : devId) + ": no fuel tap data"); processNext(); return; }
+        getAllStatusData(devId, "DiagnosticIgnitionId", fromISO, toISO, function (ignData) {
+          if (!ignData || !ignData.length) { warnings.push((dev ? dev.name : devId) + ": no ignition data"); processNext(); return; }
+          var thefts = detectThefts(fuelData, ignData, params);
+          for (var k = 0; k < thefts.length; k++) { thefts[k].vehicleId = devId; thefts[k].vehicleName = dev ? dev.name : devId; }
+          allThefts = allThefts.concat(thefts);
+          processNext();
+        });
+      });
+    }
+    processNext();
+  }
+
+  function renderResults() {
+    allThefts.sort(function (a, b) { return a.dt - b.dt; });
+    var vehicleSet = {}, totalStolen = 0, totalDrop = 0;
+    for (var i = 0; i < allThefts.length; i++) {
+      var t = allThefts[i], dev = allDevices[t.vehicleId];
+      vehicleSet[t.vehicleId] = true;
+      totalDrop += t.decreasePct;
+      if (dev && dev.tankL) totalStolen += t.decreasePct / 100 * dev.tankL;
+    }
+    var n = allThefts.length;
+    $("ftr-statTotal").textContent = n;
+    $("ftr-statVehicles").textContent = Object.keys(vehicleSet).length;
+    $("ftr-statTotalStolen").textContent = totalStolen > 0 ? totalStolen.toFixed(1) : "N/A";
+    $("ftr-statAvgStolen").textContent = totalStolen > 0 ? (totalStolen / n).toFixed(1) : "N/A";
+    $("ftr-statAvgDrop").textContent = (totalDrop / n).toFixed(1) + "%";
+    $("ftr-summaryCards").style.display = "flex";
+    $("ftr-groupControls").style.display = "flex";
+    $("ftr-btnExport").style.display = "inline-block";
+    renderTable();
+    renderSummaryTable();
+  }
+
+  function renderTable() {
+    var groupBy = $("ftr-groupBy").value, tbody = $("ftr-resultBody");
+    tbody.innerHTML = "";
+    var sections = [];
+    if (groupBy === "vehicle") {
+      var grp = {}, ord = [];
+      for (var i = 0; i < allThefts.length; i++) { var vn = allThefts[i].vehicleName; if (!grp[vn]) { grp[vn] = []; ord.push(vn); } grp[vn].push(allThefts[i]); }
+      ord.sort(); for (var i = 0; i < ord.length; i++) sections.push({ header: ord[i] + " (" + grp[ord[i]].length + " events)", rows: grp[ord[i]] });
+    } else if (groupBy === "month") {
+      var grp = {}, ord = [];
+      for (var i = 0; i < allThefts.length; i++) { var mk = monthKey(allThefts[i].dt); if (!grp[mk]) { grp[mk] = []; ord.push(mk); } grp[mk].push(allThefts[i]); }
+      ord.sort(); for (var i = 0; i < ord.length; i++) sections.push({ header: monthLabel(ord[i]) + " (" + grp[ord[i]].length + " events)", rows: grp[ord[i]] });
+    } else { sections = [{ header: null, rows: allThefts }]; }
+    var num = 1;
+    for (var s = 0; s < sections.length; s++) {
+      if (sections[s].header) {
+        var htr = document.createElement("tr"); htr.className = "group-header";
+        htr.innerHTML = '<td colspan="13">' + escapeHtml(sections[s].header) + "</td>"; tbody.appendChild(htr);
+      }
+      for (var r = 0; r < sections[s].rows.length; r++) {
+        var t = sections[s].rows[r], dev = allDevices[t.vehicleId];
+        var tankL = dev && dev.tankL ? dev.tankL : 0;
+        var stolenL = tankL ? (t.decreasePct / 100 * tankL).toFixed(1) : "N/A";
+        var vin = dev && dev.vin ? dev.vin : "N/A";
+        var tankStr = tankL ? tankL.toFixed(0) : "N/A";
+        var gpsStr = fmtGPS(t.lat, t.lon);
+        var link = buildMyGLink(t.vehicleId, t.offStart, t.offEnd);
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + num + "</td>" +
+          "<td>" + escapeHtml(t.vehicleName) + "</td>" +
+          "<td>" + escapeHtml(vin) + "</td>" +
+          "<td>" + tankStr + "</td>" +
+          "<td>" + fmtDT(t.offStart) + "</td>" +
+          "<td>" + fmtDT(t.offEnd) + "</td>" +
+          "<td>" + fmtDur(t.offDurMin) + "</td>" +
+          "<td>" + t.beforePct.toFixed(1) + "%</td>" +
+          "<td>" + t.afterPct.toFixed(1) + "%</td>" +
+          "<td class='theft-val'>-" + t.decreasePct.toFixed(1) + "%</td>" +
+          "<td class='theft-val'>" + stolenL + "</td>" +
+          "<td>" + escapeHtml(gpsStr) + "</td>" +
+          "<td><a href='" + link + "' target='_blank' class='btn-verify'>View</a></td>";
+        tbody.appendChild(tr); num++;
+      }
+    }
+    $("ftr-tableWrapper").style.display = "block";
+  }
+
+  function renderSummaryTable() {
+    var stats = {}, names = [];
+    for (var i = 0; i < allThefts.length; i++) {
+      var t = allThefts[i], vn = t.vehicleName, dev = allDevices[t.vehicleId];
+      var tankL = dev && dev.tankL ? dev.tankL : 0;
+      var stolenL = tankL ? t.decreasePct / 100 * tankL : 0;
+      if (!stats[vn]) { stats[vn] = { count: 0, stolen: 0, drops: [], vin: dev ? dev.vin || "N/A" : "N/A" }; names.push(vn); }
+      stats[vn].count++; stats[vn].stolen += stolenL; stats[vn].drops.push(t.decreasePct);
+    }
+    names.sort(function (a, b) { return stats[b].stolen - stats[a].stolen; });
+    var tbody = $("ftr-summaryBody"); tbody.innerHTML = "";
+    for (var i = 0; i < names.length; i++) {
+      var vn = names[i], st = stats[vn];
+      var avgDrop = (st.drops.reduce(function (s, v) { return s + v; }, 0) / st.drops.length).toFixed(1);
+      var maxDrop = Math.max.apply(null, st.drops).toFixed(1);
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + escapeHtml(vn) + "</td>" +
+        "<td>" + escapeHtml(st.vin) + "</td>" +
+        "<td>" + st.count + "</td>" +
+        "<td class='theft-val'>" + (st.stolen > 0 ? st.stolen.toFixed(1) + " L" : "N/A") + "</td>" +
+        "<td>" + avgDrop + "%</td>" +
+        "<td class='theft-val'>" + maxDrop + "%</td>";
+      tbody.appendChild(tr);
+    }
+    $("ftr-summaryTableWrapper").style.display = "block";
+  }
+
+  function exportCsv() {
+    if (!allThefts.length) return;
+    var lines = ["\uFEFF\"#\",\"Vehicle\",\"VIN\",\"Tank (L)\",\"Ign Off (Local)\",\"Ign On (Local)\",\"Off Duration\",\"Before %\",\"After %\",\"Decrease %\",\"Est. Stolen (L)\",\"GPS Lat\",\"GPS Lon\",\"MyGeotab Link\""];
+    for (var i = 0; i < allThefts.length; i++) {
+      var t = allThefts[i], dev = allDevices[t.vehicleId];
+      var tankL = dev && dev.tankL ? dev.tankL : 0;
+      var stolenL = tankL ? (t.decreasePct / 100 * tankL).toFixed(1) : "N/A";
+      var vin = dev && dev.vin ? dev.vin : "N/A";
+      lines.push((i + 1) + ",\"" + (t.vehicleName || "").replace(/"/g, '""') + "\",\"" + vin + "\"," +
+        (tankL || "N/A") + ",\"" + fmtDT(t.offStart) + "\",\"" + fmtDT(t.offEnd) + "\",\"" + fmtDur(t.offDurMin) + "\"," +
+        t.beforePct.toFixed(1) + "," + t.afterPct.toFixed(1) + "," + t.decreasePct.toFixed(1) + "," + stolenL + "," +
+        (t.lat != null ? t.lat.toFixed(6) : "N/A") + "," + (t.lon != null ? t.lon.toFixed(6) : "N/A") + ",\"" + buildMyGLink(t.vehicleId, t.offStart, t.offEnd) + "\"");
+    }
+    var csv = lines.join("\n");
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a"); a.href = url;
+    var dbM = window.location.pathname.match(/\/([^\/]+)\//);
+    a.download = "fuel_theft_report_" + (dbM ? dbM[1] : "export") + "_" + $("ftr-fromDate").value + "_" + $("ftr-toDate").value + ".csv";
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  return {
+    initialize: function (freshApi, freshState, callback) {
+      api = freshApi; state = freshState;
+      var dbM = window.location.pathname.match(/\/([^\/]+)\//);
+      dbName = dbM ? dbM[1] : "";
+      $("ftr-dbName").textContent = dbName || "Unknown";
+      setDefaultDates();
+      $("ftr-btnRun").addEventListener("click", runDetection);
+      $("ftr-btnExport").addEventListener("click", exportCsv);
+      $("ftr-btnAdvToggle").addEventListener("click", function () {
+        var p = $("ftr-advPanel"); p.classList.toggle("show");
+        this.textContent = p.classList.contains("show") ? "Hide Advanced Settings" : "Advanced Settings";
+      });
+      $("ftr-groupBy").addEventListener("change", function () { if (allThefts.length) renderTable(); });
+      loadDevices(function () { callback(); });
+    },
+    focus: function (freshApi, freshState) { api = freshApi; state = freshState; },
+    blur: function () {}
+  };
+};
+</script></body></html>
