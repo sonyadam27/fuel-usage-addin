@@ -1,7 +1,7 @@
 {
   "name": "Fuel Usage Add-In",
   "supportEmail": "sonyadam@geotab.com",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "isSigned": false,
   "items": [
     {
@@ -16,6 +16,13 @@
       "path": "EngineMaintenanceLink/",
       "menuName": {
         "en": "Fill-Up Detection"
+      }
+    },
+    {
+      "url": "https://sonyadam27.github.io/fuel-usage-addin/addin_files/fuelHarnessReport.html",
+      "path": "EngineMaintenanceLink/",
+      "menuName": {
+        "en": "Fuel Harness Report"
       }
     }
   ]

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuel Harness Report</title>
+<style>
+#fhr-root{font-family:Calibri,Arial,sans-serif;max-width:1600px;margin:0 auto;padding:20px;color:#222;box-sizing:border-box}
+#fhr-root *{box-sizing:border-box}
+.fhr-header{background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:16px 24px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.fhr-header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px}
+.fhr-header .fhr-db{font-size:13px;opacity:.85;margin-top:2px}
+.fhr-header .fhr-generated{font-size:12px;opacity:.7}
+.fhr-controls{background:#f0f4f8;border:1px solid #c8d8e8;border-top:none;padding:14px 20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.fhr-fg{display:flex;flex-direction:column;gap:4px}
+.fhr-fg label{font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px}
+.fhr-fg input[type=number]{padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:90px;color:#222;background:#fff}
+.fhr-fg input[type=number]:focus{outline:none;border-color:#2E75B6;box-shadow:0 0 0 2px rgba(46,117,182,.2)}
+.fhr-btn{padding:8px 22px;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
+.fhr-btn-primary{background:#1F4E79;color:#fff}
+.fhr-btn-primary:hover{background:#163960}
+.fhr-btn-primary:disabled{background:#7faac8;cursor:not-allowed}
+.fhr-btn-success{background:#217346;color:#fff}
+.fhr-btn-success:hover{background:#1a5c38}
+.fhr-btn-success:disabled{background:#88b89e;cursor:not-allowed}
+.fhr-cards{display:flex;gap:14px;padding:16px 20px;background:#fff;border:1px solid #c8d8e8;border-top:none;flex-wrap:wrap}
+.fhr-card{flex:1;min-width:150px;background:#f0f4f8;border:1px solid #c8d8e8;border-radius:6px;padding:12px 16px;text-align:center}
+.fhr-card-label{font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px}
+.fhr-card-value{font-size:26px;font-weight:700;color:#1F4E79}
+.fhr-card-sub{font-size:11px;color:#888;margin-top:2px}
+.fhr-loading{text-align:center;padding:48px 20px;color:#666;display:none;background:#fff;border:1px solid #c8d8e8;border-top:none}
+.fhr-spinner{width:44px;height:44px;border:4px solid #dce8f0;border-top-color:#1F4E79;border-radius:50%;animation:fhr-spin .8s linear infinite;margin:0 auto 14px}
+@keyframes fhr-spin{to{transform:rotate(360deg)}}
+.fhr-progress{font-size:13px;color:#1F4E79;margin-top:6px}
+.fhr-error{background:#fde8e8;color:#a00;border:1px solid #f5b8b8;border-radius:4px;padding:12px 16px;margin:12px 0;font-size:14px;display:none}
+.fhr-info{background:#e8f0fb;color:#1F4E79;border:1px solid #b8d0f5;border-radius:4px;padding:10px 16px;margin:0 0 8px;font-size:13px;display:none}
+.fhr-table-wrap{overflow-x:auto;border:1px solid #c8d8e8;border-top:none;border-radius:0 0 8px 8px;display:none}
+table.fhr-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+table.fhr-table thead tr.fhr-thead-group th{background:#2E75B6;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:6px 8px;letter-spacing:.4px;text-transform:uppercase;border-right:2px solid #1F4E79}
+table.fhr-table thead tr.fhr-thead-group th:last-child{border-right:none}
+table.fhr-table thead tr.fhr-thead-cols th{background:#1F4E79;color:#fff;padding:9px 10px;text-align:center;font-size:12px;font-weight:700;white-space:nowrap;border-right:1px solid #2E75B6;cursor:pointer;user-select:none;position:sticky;top:0}
+table.fhr-table thead tr.fhr-thead-cols th:hover{background:#163960}
+table.fhr-table thead tr.fhr-thead-cols th.sort-asc::after{content:" \25B2"}
+table.fhr-table thead tr.fhr-thead-cols th.sort-desc::after{content:" \25BC"}
+table.fhr-table tbody tr:nth-child(even){background:#deeaf1}
+table.fhr-table tbody tr:nth-child(odd){background:#fff}
+table.fhr-table tbody tr:hover{background:#bcd4e8}
+table.fhr-table td{padding:8px 10px;border-bottom:1px solid #c8d8e8;border-right:1px solid #dce8f0;white-space:nowrap}
+table.fhr-table td:last-child{border-right:none}
+.fhr-td-num{text-align:center;font-weight:700;color:#1F4E79}
+.fhr-td-name{font-weight:600}
+.fhr-td-mono{font-family:Consolas,monospace;font-size:12px}
+.fhr-td-center{text-align:center}
+.fhr-td-right{text-align:right}
+.fhr-td-na{text-align:center;color:#c00;font-weight:700;background:#fde8e8 !important}
+.fhr-td-warn{background:#fff2cc !important;color:#7f6000;font-weight:600}
+.fhr-td-lvl-low{color:#c00;font-weight:700}
+.fhr-td-lvl-ok{color:#217346;font-weight:700}
+.fhr-td-lvl-mid{color:#7f6000;font-weight:700}
+.fhr-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;flex-wrap:wrap;gap:8px}
+.fhr-count{font-size:13px;color:#666}
+</style>
+</head>
+<body>
+<div id="fhr-root">
+  <div class="fhr-header">
+    <div>
+      <h1>Fuel Harness Report</h1>
+      <div class="fhr-db">Database: <strong id="fhr-dbname">—</strong></div>
+    </div>
+    <div class="fhr-generated" id="fhr-generated"></div>
+  </div>
+
+  <div class="fhr-controls">
+    <div class="fhr-fg">
+      <label>Tank Capacity (L)</label>
+      <input type="number" id="fhr-tank" value="200" min="1" max="2000" step="1">
+    </div>
+    <div class="fhr-fg">
+      <label>Fill Threshold (%)</label>
+      <input type="number" id="fhr-thresh" value="20" min="5" max="80" step="1">
+    </div>
+    <div class="fhr-fg">
+      <label>Economy Window</label>
+      <select id="fhr-window" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="60">Last 60 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </div>
+    <button class="fhr-btn fhr-btn-primary" id="fhr-load">&#8635; Load / Refresh</button>
+    <button class="fhr-btn fhr-btn-success" id="fhr-export" disabled>&#8659; Export CSV</button>
+  </div>
+
+  <div class="fhr-cards" id="fhr-cards" style="display:none">
+    <div class="fhr-card">
+      <div class="fhr-card-label">Harness Vehicles</div>
+      <div class="fhr-card-value" id="card-count">0</div>
+      <div class="fhr-card-sub">auto-detected</div>
+    </div>
+    <div class="fhr-card">
+      <div class="fhr-card-label">Avg Fuel Level</div>
+      <div class="fhr-card-value" id="card-level">—</div>
+      <div class="fhr-card-sub">current</div>
+    </div>
+    <div class="fhr-card">
+      <div class="fhr-card-label">Avg Economy</div>
+      <div class="fhr-card-value" id="card-kml">—</div>
+      <div class="fhr-card-sub">km/L (vehicles with full cycle data)</div>
+    </div>
+    <div class="fhr-card">
+      <div class="fhr-card-label">Total Fuel Used</div>
+      <div class="fhr-card-value" id="card-fuel">—</div>
+      <div class="fhr-card-sub">L (economy window)</div>
+    </div>
+    <div class="fhr-card">
+      <div class="fhr-card-label">Total Distance</div>
+      <div class="fhr-card-value" id="card-dist">—</div>
+      <div class="fhr-card-sub">km (economy window)</div>
+    </div>
+  </div>
+
+  <div class="fhr-loading" id="fhr-loading">
+    <div class="fhr-spinner"></div>
+    <div>Loading fuel harness data&hellip;</div>
+    <div class="fhr-progress" id="fhr-progress"></div>
+  </div>
+
+  <div class="fhr-error" id="fhr-error"></div>
+
+  <div class="fhr-table-wrap" id="fhr-table-wrap">
+    <div class="fhr-info" id="fhr-info"></div>
+    <table class="fhr-table" id="fhr-table">
+      <thead>
+        <tr class="fhr-thead-group">
+          <th colspan="3"></th>
+          <th colspan="3">Economy (selected window)</th>
+          <th colspan="2">Current Fuel Reading</th>
+          <th colspan="4">Timestamps (UTC+7)</th>
+        </tr>
+        <tr class="fhr-thead-cols">
+          <th data-col="num">#</th>
+          <th data-col="vehicle">Vehicle</th>
+          <th data-col="serial">Serial</th>
+          <th data-col="kml">KM/L</th>
+          <th data-col="fuelused">Fuel Used (L)</th>
+          <th data-col="distance">Distance (km)</th>
+          <th data-col="fuellvl">Fuel Level %</th>
+          <th data-col="analog">Analog Input</th>
+          <th data-col="fuelts">Fuel Level TS</th>
+          <th data-col="analogts">Analog TS</th>
+          <th data-col="delta">Delta (s)</th>
+          <th data-col="lastfill">Last Fill-Up</th>
+        </tr>
+      </thead>
+      <tbody id="fhr-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="fhr-footer">
+    <div class="fhr-count" id="fhr-count"></div>
+  </div>
+</div>
+
+<script>
+geotab.addin.fuelHarnessReport = function () {
+  "use strict";
+
+  var HARNESS_DIAG = "aFzVpeQqXskGNRmG8avPJ9Q";
+  var ANALOG_DIAG  = "a4Cq3dWtCV0yoo9j_v__LbQ";
+  var UTC7_MS      = 7 * 3600 * 1000;
+  var _api, _rows = [], _sortCol = "vehicle", _sortAsc = true;
+
+  function $(id) { return document.getElementById(id); }
+
+  function callApi(method, params) {
+    return new Promise(function (resolve, reject) {
+      _api.call(method, params, resolve, reject);
+    });
+  }
+
+  function setProgress(msg) { $("fhr-progress").textContent = msg; }
+
+  function showLoading(show) {
+    $("fhr-loading").style.display = show ? "block" : "none";
+    $("fhr-load").disabled = show;
+    $("fhr-export").disabled = show || _rows.length === 0;
+    if (show) {
+      $("fhr-table-wrap").style.display = "none";
+      $("fhr-cards").style.display = "none";
+    }
+  }
+
+  function showError(msg) {
+    var el = $("fhr-error");
+    if (msg) { el.textContent = msg; el.style.display = "block"; }
+    else { el.style.display = "none"; }
+  }
+
+  function toUTC7(dateStr) {
+    if (!dateStr) return null;
+    try {
+      var d = new Date(dateStr);
+      var u = new Date(d.getTime() + UTC7_MS);
+      return u.toISOString().replace("T", " ").substring(0, 19);
+    } catch (e) { return null; }
+  }
+
+  function getEp(dateStr) {
+    try { return new Date(dateStr).getTime(); } catch (e) { return 0; }
+  }
+
+  function detectFillups(records, thresh) {
+    if (records.length < 2) return [];
+    var fillups = [], i = 1;
+    while (i < records.length) {
+      var prev = records[i - 1].val, curr = records[i].val;
+      if (curr - prev >= thresh) {
+        var j = i - 1;
+        while (j > 0 && records[j].val >= records[j - 1].val) j--;
+        fillups.push({
+          ep:     getEp(records[i].dt),
+          before: records[j].val,
+          after:  curr,
+          dt:     records[i].dt
+        });
+        i += 2;
+      } else { i++; }
+    }
+    return fillups;
+  }
+
+  function kmBetween(ep1, ep2, trips) {
+    var total = 0;
+    for (var k = 0; k < trips.length; k++) {
+      var t = trips[k];
+      var s = getEp(t.start), e = getEp(t.stop);
+      if (e >= ep1 && s <= ep2) {
+        var overlap = Math.min(e, ep2) - Math.max(s, ep1);
+        var dur = e - s;
+        if (dur > 0) total += (t.distance || 0) * (overlap / dur);
+      }
+    }
+    return total;
+  }
+
+  function escHtml(str) {
+    var d = document.createElement("div");
+    d.textContent = str || "";
+    return d.innerHTML;
+  }
+
+  function fmtNum(v, dec) {
+    if (v == null || isNaN(v)) return null;
+    return parseFloat(v.toFixed(dec));
+  }
+
+  function lvlClass(pct) {
+    if (pct == null) return "";
+    if (pct < 25) return "fhr-td-lvl-low";
+    if (pct < 50) return "fhr-td-lvl-mid";
+    return "fhr-td-lvl-ok";
+  }
+
+  function buildCell(val, extra, rowFill) {
+    if (val == null || val === "") {
+      return '<td class="fhr-td-na">N/A</td>';
+    }
+    var cls = "fhr-td-center" + (extra ? " " + extra : "");
+    return '<td class="' + cls + '">' + escHtml(String(val)) + '</td>';
+  }
+
+  function renderTable(rows) {
+    var tbody = $("fhr-tbody");
+    tbody.innerHTML = "";
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:32px;color:#666">No harness devices found in this database.</td></tr>';
+      return;
+    }
+    rows.forEach(function (r, i) {
+      var tr = document.createElement("tr");
+      var cells = "";
+
+      cells += '<td class="fhr-td-num">' + (i + 1) + '</td>';
+      cells += '<td class="fhr-td-name">' + escHtml(r.vehicle) + '</td>';
+      cells += '<td class="fhr-td-mono">' + escHtml(r.serial) + '</td>';
+
+      // KM/L
+      if (r.kml == null) cells += '<td class="fhr-td-na">N/A</td>';
+      else cells += '<td class="fhr-td-center"><strong>' + r.kml.toFixed(2) + '</strong></td>';
+
+      // Fuel Used
+      if (r.totalL == null) cells += '<td class="fhr-td-na">N/A</td>';
+      else cells += '<td class="fhr-td-right">' + r.totalL.toFixed(1) + '</td>';
+
+      // Distance
+      if (r.totalKm == null) cells += '<td class="fhr-td-na">N/A</td>';
+      else cells += '<td class="fhr-td-right">' + r.totalKm.toFixed(1) + '</td>';
+
+      // Fuel Level
+      if (r.fuelLvl == null) {
+        cells += '<td class="fhr-td-na">N/A</td>';
+      } else {
+        var lc = lvlClass(r.fuelLvl);
+        cells += '<td class="fhr-td-center ' + lc + '">' + r.fuelLvl.toFixed(1) + '%</td>';
+      }
+
+      // Analog Input
+      if (r.analog == null) cells += '<td class="fhr-td-na">N/A</td>';
+      else cells += '<td class="fhr-td-center">' + r.analog.toFixed(4) + '</td>';
+
+      // Fuel Level TS
+      var fts = toUTC7(r.fuelTs);
+      cells += fts ? '<td class="fhr-td-mono fhr-td-center">' + fts + '</td>' : '<td class="fhr-td-na">N/A</td>';
+
+      // Analog TS
+      var ats = toUTC7(r.analogTs);
+      cells += ats ? '<td class="fhr-td-mono fhr-td-center">' + ats + '</td>' : '<td class="fhr-td-na">N/A</td>';
+
+      // Delta
+      if (r.delta == null) {
+        cells += '<td class="fhr-td-na">N/A</td>';
+      } else {
+        var dltClass = r.delta > 300 ? "fhr-td-warn fhr-td-center" : "fhr-td-center";
+        cells += '<td class="' + dltClass + '">' + r.delta + 's</td>';
+      }
+
+      // Last Fill-Up
+      var lfu = toUTC7(r.lastFillDt);
+      cells += lfu ? '<td class="fhr-td-mono fhr-td-center">' + lfu + '</td>' : '<td class="fhr-td-na">N/A</td>';
+
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function sortRows(col) {
+    if (_sortCol === col) { _sortAsc = !_sortAsc; }
+    else { _sortCol = col; _sortAsc = true; }
+
+    // Update header indicators
+    var ths = document.querySelectorAll(".fhr-thead-cols th");
+    ths.forEach(function (th) {
+      th.classList.remove("sort-asc", "sort-desc");
+      if (th.dataset.col === _sortCol) {
+        th.classList.add(_sortAsc ? "sort-asc" : "sort-desc");
+      }
+    });
+
+    _rows.sort(function (a, b) {
+      var va, vb;
+      switch (col) {
+        case "num": case "kml":      va = a.kml;      vb = b.kml;    break;
+        case "fuelused":  va = a.totalL;   vb = b.totalL;  break;
+        case "distance":  va = a.totalKm;  vb = b.totalKm; break;
+        case "fuellvl":   va = a.fuelLvl;  vb = b.fuelLvl; break;
+        case "analog":    va = a.analog;   vb = b.analog;  break;
+        case "delta":     va = a.delta;    vb = b.delta;   break;
+        case "fuelts":    va = a.fuelTs;   vb = b.fuelTs;  break;
+        case "analogts":  va = a.analogTs; vb = b.analogTs;break;
+        case "lastfill":  va = a.lastFillDt; vb = b.lastFillDt; break;
+        case "serial":    va = a.serial;   vb = b.serial;  break;
+        default:          va = a.vehicle;  vb = b.vehicle;
+      }
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      var cmp = (typeof va === "string") ? va.localeCompare(vb) : va - vb;
+      return _sortAsc ? cmp : -cmp;
+    });
+
+    renderTable(_rows);
+  }
+
+  async function loadData() {
+    var tankL  = parseFloat($("fhr-tank").value)  || 200;
+    var thresh = parseFloat($("fhr-thresh").value) || 20;
+    var winDays = parseInt($("fhr-window").value)  || 30;
+
+    showError(null);
+    showLoading(true);
+    _rows = [];
+
+    try {
+      var now      = new Date();
+      var winStart = new Date(now.getTime() - winDays * 86400000);
+      var day7ago  = new Date(now.getTime() - 7  * 86400000);
+
+      var toISO = function (d) { return d.toISOString(); };
+
+      setProgress("Fetching devices and harness status data\u2026");
+
+      // Parallel: fetch devices + 30d harness data + 7d analog data
+      var results = await Promise.all([
+        callApi("Get", { typeName: "Device", resultsLimit: 10000 }),
+        callApi("Get", {
+          typeName: "StatusData",
+          search: {
+            fromDate:         toISO(winStart),
+            toDate:           toISO(now),
+            diagnosticSearch: { id: HARNESS_DIAG }
+          },
+          resultsLimit: 100000
+        }),
+        callApi("Get", {
+          typeName: "StatusData",
+          search: {
+            fromDate:         toISO(day7ago),
+            toDate:           toISO(now),
+            diagnosticSearch: { id: ANALOG_DIAG }
+          },
+          resultsLimit: 100000
+        })
+      ]);
+
+      var devices  = results[0];
+      var harness  = results[1];
+      var analogRaw= results[2];
+
+      // Build device map
+      var deviceMap = {};
+      devices.forEach(function (d) { deviceMap[d.id] = d; });
+
+      // Group harness records by device
+      var harnessById = {};
+      harness.forEach(function (r) {
+        var id = r.device.id;
+        if (!harnessById[id]) harnessById[id] = [];
+        harnessById[id].push({ dt: r.dateTime, val: r.data });
+      });
+
+      // Group analog records by device
+      var analogById = {};
+      analogRaw.forEach(function (r) {
+        var id = r.device.id;
+        if (!analogById[id]) analogById[id] = [];
+        analogById[id].push({ dt: r.dateTime, val: r.data });
+      });
+
+      var harnessIds = Object.keys(harnessById);
+
+      if (harnessIds.length === 0) {
+        showLoading(false);
+        showError("No fuel harness devices detected in this database (no StatusData found for diagnostic " + HARNESS_DIAG + ").");
+        return;
+      }
+
+      // Fetch trips per harness device (batched, 5 at a time)
+      setProgress("Fetching trip data for " + harnessIds.length + " harness devices\u2026");
+      var tripsById = {};
+      var batchSize = 5;
+      for (var bi = 0; bi < harnessIds.length; bi += batchSize) {
+        var batch = harnessIds.slice(bi, bi + batchSize);
+        var tripPromises = batch.map(function (id) {
+          return callApi("Get", {
+            typeName: "Trip",
+            search: {
+              fromDate:     toISO(winStart),
+              toDate:       toISO(now),
+              deviceSearch: { id: id }
+            },
+            resultsLimit: 50000
+          }).then(function (trips) { return { id: id, trips: trips }; });
+        });
+        var batchResult = await Promise.all(tripPromises);
+        batchResult.forEach(function (r) { tripsById[r.id] = r.trips; });
+        setProgress("Fetching trips: " + Math.min(bi + batchSize, harnessIds.length) + " / " + harnessIds.length + " done\u2026");
+      }
+
+      // Process each harness device
+      setProgress("Computing fuel economy\u2026");
+      _rows = harnessIds.map(function (id) {
+        var device  = deviceMap[id] || { id: id, name: id, serialNumber: id };
+        var hRecs   = harnessById[id].slice().sort(function (a, b) { return a.dt < b.dt ? -1 : 1; });
+        var aRecs   = (analogById[id] || []).slice().sort(function (a, b) { return a.dt < b.dt ? -1 : 1; });
+        var trips   = tripsById[id] || [];
+
+        // Current fuel level
+        var latestH  = hRecs.length ? hRecs[hRecs.length - 1] : null;
+        var fuelLvl  = latestH ? latestH.val : null;
+        var fuelTs   = latestH ? latestH.dt  : null;
+        var fuelEp   = fuelTs  ? getEp(fuelTs) : null;
+
+        // Closest analog
+        var analog = null, analogTs = null, delta = null;
+        if (fuelEp !== null && aRecs.length) {
+          var best = aRecs[0], bestDiff = Math.abs(getEp(best.dt) - fuelEp);
+          aRecs.forEach(function (r) {
+            var diff = Math.abs(getEp(r.dt) - fuelEp);
+            if (diff < bestDiff) { best = r; bestDiff = diff; }
+          });
+          analog   = best.val;
+          analogTs = best.dt;
+          delta    = Math.round(bestDiff / 1000);
+        }
+
+        // Fill cycles
+        var fillups = detectFillups(hRecs, thresh);
+        var totalKm = 0, totalL = 0, lastFillDt = null;
+        if (fillups.length) {
+          lastFillDt = fillups[fillups.length - 1].dt;
+          for (var fi = 0; fi < fillups.length - 1; fi++) {
+            var f1 = fillups[fi], f2 = fillups[fi + 1];
+            var consumed = (f1.after - f2.before) / 100 * tankL;
+            if (consumed <= 0) continue;
+            totalL  += consumed;
+            totalKm += kmBetween(f1.ep, f2.ep, trips);
+          }
+        }
+
+        return {
+          id:         id,
+          vehicle:    device.name || device.serialNumber || id,
+          serial:     device.serialNumber || id,
+          kml:        totalL > 0 ? totalKm / totalL : null,
+          totalL:     totalL  > 0 ? totalL  : null,
+          totalKm:    totalKm > 0 ? totalKm : null,
+          fuelLvl:    fuelLvl,
+          analog:     analog,
+          fuelTs:     fuelTs,
+          analogTs:   analogTs,
+          delta:      delta,
+          lastFillDt: lastFillDt
+        };
+      });
+
+      _rows.sort(function (a, b) { return a.vehicle.localeCompare(b.vehicle); });
+
+      // Summary cards
+      var withLevel  = _rows.filter(function (r) { return r.fuelLvl != null; });
+      var withEcon   = _rows.filter(function (r) { return r.kml != null; });
+      var avgLevel   = withLevel.length ? withLevel.reduce(function (s, r) { return s + r.fuelLvl; }, 0) / withLevel.length : null;
+      var avgKml     = withEcon.length  ? withEcon.reduce(function (s, r)  { return s + r.kml; },    0) / withEcon.length  : null;
+      var sumL       = _rows.reduce(function (s, r) { return s + (r.totalL  || 0); }, 0);
+      var sumKm      = _rows.reduce(function (s, r) { return s + (r.totalKm || 0); }, 0);
+
+      $("card-count").textContent = _rows.length;
+      $("card-level").textContent = avgLevel != null ? avgLevel.toFixed(1) + "%" : "—";
+      $("card-kml").textContent   = avgKml   != null ? avgKml.toFixed(2)         : "—";
+      $("card-fuel").textContent  = sumL  > 0 ? sumL.toFixed(0)  + " L"  : "—";
+      $("card-dist").textContent  = sumKm > 0 ? sumKm.toFixed(0) + " km" : "—";
+      $("fhr-cards").style.display = "flex";
+
+      var info = $("fhr-info");
+      var naCount = _rows.filter(function (r) { return r.kml == null; }).length;
+      if (naCount > 0) {
+        info.textContent = naCount + " vehicle(s) show N/A for economy — no complete fill-up cycles detected in the selected window. Try a wider window or lower the fill threshold.";
+        info.style.display = "block";
+      } else {
+        info.style.display = "none";
+      }
+
+      $("fhr-count").textContent = _rows.length + " harness vehicle(s) detected | Economy window: last " + winDays + " days | Tank: " + tankL + " L | Fill threshold: " + thresh + "%";
+      $("fhr-generated").textContent = "Updated: " + toUTC7(now.toISOString()) + " (UTC+7)";
+
+      renderTable(_rows);
+      $("fhr-table-wrap").style.display = "block";
+      $("fhr-export").disabled = false;
+      _sortCol = "vehicle"; _sortAsc = true;
+
+    } catch (err) {
+      showError("Error: " + (err.message || err));
+    }
+
+    showLoading(false);
+  }
+
+  function exportCsv() {
+    if (!_rows.length) return;
+    var headers = [
+      "#","Vehicle","Serial",
+      "KM/L","Fuel Used (L)","Distance (km)",
+      "Fuel Level %","Analog Input",
+      "Fuel Level TS (UTC+7)","Analog TS (UTC+7)","Delta (s)","Last Fill-Up (UTC+7)"
+    ];
+    var lines = [headers.map(function (h) { return '"' + h + '"'; }).join(",")];
+    _rows.forEach(function (r, i) {
+      var row = [
+        i + 1,
+        '"' + (r.vehicle || "").replace(/"/g,'""') + '"',
+        '"' + (r.serial  || "").replace(/"/g,'""') + '"',
+        r.kml    != null ? r.kml.toFixed(2)    : "",
+        r.totalL != null ? r.totalL.toFixed(1)  : "",
+        r.totalKm!= null ? r.totalKm.toFixed(1) : "",
+        r.fuelLvl!= null ? r.fuelLvl.toFixed(1) + "%" : "",
+        r.analog != null ? r.analog.toFixed(4)  : "",
+        '"' + (toUTC7(r.fuelTs)     || "") + '"',
+        '"' + (toUTC7(r.analogTs)   || "") + '"',
+        r.delta  != null ? r.delta + "s" : "",
+        '"' + (toUTC7(r.lastFillDt) || "") + '"'
+      ];
+      lines.push(row.join(","));
+    });
+    var csv = "\uFEFF" + lines.join("\r\n"); // BOM for Excel UTF-8
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement("a");
+    a.href = url;
+    var m = window.location.pathname.match(/\/([^/]+)\//);
+    a.download = "fuel_harness_" + (m ? m[1] : "export") + ".csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return {
+    initialize: function (api, state, callback) {
+      _api = api;
+      var m  = window.location.pathname.match(/\/([^/]+)\//);
+      $("fhr-dbname").textContent = m ? m[1] : "Unknown";
+
+      $("fhr-load").addEventListener("click", loadData);
+      $("fhr-export").addEventListener("click", exportCsv);
+
+      // Sortable columns
+      var ths = document.querySelectorAll(".fhr-thead-cols th");
+      ths.forEach(function (th) {
+        th.addEventListener("click", function () {
+          if (_rows.length) sortRows(th.dataset.col);
+        });
+      });
+
+      callback();
+    },
+    focus: function (api, state) {
+      _api = api;
+      loadData();
+    },
+    blur: function () {}
+  };
+};
+</script>
+</body>
+</html>
