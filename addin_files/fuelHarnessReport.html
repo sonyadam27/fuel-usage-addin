@@ -160,7 +160,7 @@ geotab.addin.fuelHarnessReport = function () {
   var HARNESS_DIAG = "aFzVpeQqXskGNRmG8avPJ9Q";
   var ANALOG_DIAG  = "a4Cq3dWtCV0yoo9j_v__LbQ";
   var FILL_THRESH  = 20;      // % rise to count as a fill-up
-  var DEFAULT_TANK = 200;     // fallback if device has no fuelTankCapacity set
+  var DEFAULT_TANK = 0;       // fallback if device has no fuelTankCapacity set (0 = show N/A)
   var UTC7_MS      = 7 * 3600 * 1000;
   var _api, _rows = [], _sortCol = "vehicle", _sortAsc = true;
 
@@ -546,7 +546,7 @@ geotab.addin.fuelHarnessReport = function () {
         info.style.display = "none";
       }
 
-      $("fhr-count").textContent = _rows.length + " harness vehicle(s) detected | Economy window: last " + winDays + " days | Tank capacity read per vehicle (default " + DEFAULT_TANK + " L) | Fill threshold: " + FILL_THRESH + "%";
+      $("fhr-count").textContent = _rows.length + " harness vehicle(s) detected | Economy window: last " + winDays + " days | Tank capacity per vehicle from MyGeotab (0 L = not configured) | Min fill threshold: " + FILL_THRESH + "%";
       $("fhr-generated").textContent = "Updated: " + toUTC7(now.toISOString()) + " (UTC+7)";
 
       renderTable(_rows);
