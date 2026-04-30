@@ -60,13 +60,13 @@ table.fhr-table td:last-child{border-right:none}
 </style>
 </head>
 <body>
-<div id="fhr-root">
-  <div class="fhr-header">
+<div id="fhr-root" style="border:2px solid #1F4E79;border-radius:10px;box-shadow:0 4px 20px rgba(31,78,121,.3);background:#fff;padding:0;overflow:hidden">
+  <div class="fhr-header" style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
     <div>
-      <h1>Fuel Harness Report</h1>
-      <div class="fhr-db">Database: <strong id="fhr-dbname">—</strong></div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">Fuel Harness Report</h1>
+      <div class="fhr-db" style="font-size:14px;color:#fff;opacity:.9;margin-top:4px;font-weight:600">Database: <strong id="fhr-dbname">—</strong></div>
     </div>
-    <div class="fhr-generated" id="fhr-generated"></div>
+    <div class="fhr-generated" id="fhr-generated" style="font-size:12px;color:rgba(255,255,255,.8)"></div>
   </div>
 
   <div class="fhr-controls">
