@@ -6,7 +6,6 @@
 <title>Fuel Theft Report</title>
 <style>
 @keyframes spin{to{transform:rotate(360deg)}}
-#ftr-advPanel.show{display:flex!important;flex-wrap:wrap!important;gap:16px!important;}
 </style>
 </head>
 <body>
@@ -540,8 +539,12 @@ geotab.addin.fuelTheftReport = function () {
       $("ftr-btnRun").addEventListener("click", runDetection);
       $("ftr-btnExport").addEventListener("click", exportCsv);
       $("ftr-btnAdvToggle").addEventListener("click", function () {
-        var p = $("ftr-advPanel"); p.classList.toggle("show");
-        this.textContent = p.classList.contains("show") ? "Hide Advanced Settings" : "Advanced Settings";
+        var p = $("ftr-advPanel");
+        var open = p.style.display === "none" || p.style.display === "";
+        p.style.display = open ? "flex" : "none";
+        p.style.flexWrap = open ? "wrap" : "";
+        p.style.gap = open ? "16px" : "";
+        this.textContent = open ? "Hide Advanced Settings" : "Advanced Settings";
       });
       $("ftr-groupBy").addEventListener("change", function () { if (allThefts.length) renderTable(); });
       loadDevices(function () { callback(); });
