@@ -14,8 +14,6 @@
 .fhr-controls{background:#f0f4f8;border:1px solid #c8d8e8;border-top:none;padding:14px 20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .fhr-fg{display:flex;flex-direction:column;gap:4px}
 .fhr-fg label{font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px}
-.fhr-fg input[type=number]{padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:90px;color:#222;background:#fff}
-.fhr-fg input[type=number]:focus{outline:none;border-color:#2E75B6;box-shadow:0 0 0 2px rgba(46,117,182,.2)}
 .fhr-btn{padding:8px 22px;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
 .fhr-btn-primary{background:#1F4E79;color:#fff}
 .fhr-btn-primary:hover{background:#163960}
@@ -72,14 +70,6 @@ table.fhr-table td:last-child{border-right:none}
   </div>
 
   <div class="fhr-controls">
-    <div class="fhr-fg">
-      <label>Tank Capacity (L)</label>
-      <input type="number" id="fhr-tank" value="200" min="1" max="2000" step="1">
-    </div>
-    <div class="fhr-fg">
-      <label>Fill Threshold (%)</label>
-      <input type="number" id="fhr-thresh" value="20" min="5" max="80" step="1">
-    </div>
     <div class="fhr-fg">
       <label>Economy Window</label>
       <select id="fhr-window" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
@@ -169,6 +159,8 @@ geotab.addin.fuelHarnessReport = function () {
 
   var HARNESS_DIAG = "aFzVpeQqXskGNRmG8avPJ9Q";
   var ANALOG_DIAG  = "a4Cq3dWtCV0yoo9j_v__LbQ";
+  var FILL_THRESH  = 20;      // % rise to count as a fill-up
+  var DEFAULT_TANK = 200;     // fallback if device has no fuelTankCapacity set
   var UTC7_MS      = 7 * 3600 * 1000;
   var _api, _rows = [], _sortCol = "vehicle", _sortAsc = true;
 
@@ -374,9 +366,7 @@ geotab.addin.fuelHarnessReport = function () {
   }
 
   async function loadData() {
-    var tankL  = parseFloat($("fhr-tank").value)  || 200;
-    var thresh = parseFloat($("fhr-thresh").value) || 20;
-    var winDays = parseInt($("fhr-window").value)  || 30;
+    var winDays = parseInt($("fhr-window").value) || 30;
 
     showError(null);
     showLoading(true);
@@ -495,8 +485,13 @@ geotab.addin.fuelHarnessReport = function () {
           delta    = Math.round(bestDiff / 1000);
         }
 
+        // Per-vehicle tank capacity from MyGeotab device object, fallback to DEFAULT_TANK
+        var tankL = (device.fuelTankCapacity && device.fuelTankCapacity > 0)
+          ? device.fuelTankCapacity
+          : DEFAULT_TANK;
+
         // Fill cycles
-        var fillups = detectFillups(hRecs, thresh);
+        var fillups = detectFillups(hRecs, FILL_THRESH);
         var totalKm = 0, totalL = 0, lastFillDt = null;
         if (fillups.length) {
           lastFillDt = fillups[fillups.length - 1].dt;
@@ -545,13 +540,13 @@ geotab.addin.fuelHarnessReport = function () {
       var info = $("fhr-info");
       var naCount = _rows.filter(function (r) { return r.kml == null; }).length;
       if (naCount > 0) {
-        info.textContent = naCount + " vehicle(s) show N/A for economy — no complete fill-up cycles detected in the selected window. Try a wider window or lower the fill threshold.";
+        info.textContent = naCount + " vehicle(s) show N/A for economy — no complete fill-up cycles detected in the selected window. Try a wider economy window.";
         info.style.display = "block";
       } else {
         info.style.display = "none";
       }
 
-      $("fhr-count").textContent = _rows.length + " harness vehicle(s) detected | Economy window: last " + winDays + " days | Tank: " + tankL + " L | Fill threshold: " + thresh + "%";
+      $("fhr-count").textContent = _rows.length + " harness vehicle(s) detected | Economy window: last " + winDays + " days | Tank capacity read per vehicle (default " + DEFAULT_TANK + " L) | Fill threshold: " + FILL_THRESH + "%";
       $("fhr-generated").textContent = "Updated: " + toUTC7(now.toISOString()) + " (UTC+7)";
 
       renderTable(_rows);
