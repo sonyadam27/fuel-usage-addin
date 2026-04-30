@@ -1,113 +1,162 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Fuel Theft Report</title><style>
-#ftr-container{font-family:Arial,Helvetica,sans-serif!important;max-width:1600px;margin:0 auto;padding:20px;color:#333!important;box-sizing:border-box}
-#ftr-container h1{font-size:22px!important;margin:0 0 4px!important;color:#1a1a2e!important;font-weight:700!important}
-#ftr-container .subtitle{font-size:14px!important;color:#666!important;margin:0 0 20px!important}
-#ftr-container .controls{display:flex!important;align-items:center!important;gap:10px!important;margin-bottom:16px!important;flex-wrap:wrap!important}
-#ftr-container .ctrl-label{font-size:14px!important;color:#333!important;white-space:nowrap!important;font-weight:normal!important}
-#ftr-container .controls input[type=date],#ftr-container .controls select{padding:7px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:14px!important;color:#333!important;background:#fff!important;display:inline-block!important}
-#ftr-container .controls select{min-width:150px!important}
-#ftr-container .btn-primary{padding:8px 20px!important;background-color:#007bff!important;color:#fff!important;border:none!important;border-radius:4px!important;font-size:14px!important;cursor:pointer!important;font-weight:600!important;white-space:nowrap!important}
-#ftr-container .btn-primary:hover{background-color:#0056b3!important}
-#ftr-container .btn-primary:disabled{background-color:#6c757d!important;cursor:not-allowed!important}
-#ftr-container .btn-secondary{padding:8px 20px!important;background-color:#28a745!important;color:#fff!important;border:none!important;border-radius:4px!important;font-size:14px!important;cursor:pointer!important;font-weight:600!important;white-space:nowrap!important}
-#ftr-container .btn-secondary:hover{background-color:#1e7e34!important}
-#ftr-container .btn-toggle{padding:6px 14px!important;background:#f0f0f0!important;color:#555!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important;cursor:pointer!important;margin-bottom:16px!important;display:inline-block!important}
-#ftr-container .adv-panel{display:none;background:#f8f9fa!important;border:1px solid #e0e0e0!important;border-radius:6px!important;padding:16px!important;margin-bottom:16px!important;gap:16px!important;flex-wrap:wrap!important}
-#ftr-container .adv-panel.show{display:flex!important}
-#ftr-container .adv-ctrl{display:flex!important;flex-direction:column!important;gap:4px!important}
-#ftr-container .adv-ctrl label{font-size:13px!important;font-weight:600!important;color:#555!important}
-#ftr-container .adv-ctrl input{padding:7px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:14px!important;width:100px!important;box-sizing:border-box!important}
-#ftr-container .adv-ctrl input.diag-input{width:280px!important}
-#ftr-container .progress-area{margin-bottom:16px}
-#ftr-container .progress-bar-outer{height:8px!important;background:#e0e0e0!important;border-radius:4px!important;overflow:hidden!important;margin-top:6px!important}
-#ftr-container .progress-bar-inner{height:100%!important;background:#dc3545!important;border-radius:4px!important;transition:width .3s!important}
-#ftr-container .progress-text{font-size:13px!important;color:#666!important}
-#ftr-container .summary-cards{display:flex!important;gap:16px!important;margin-bottom:20px!important;flex-wrap:wrap!important}
-#ftr-container .card{flex:1!important;min-width:155px!important;background:#fff!important;border:1px solid #ddd!important;border-radius:6px!important;padding:18px 16px!important;text-align:center!important;box-sizing:border-box!important}
-#ftr-container .card-label{font-size:11px!important;color:#999!important;text-transform:uppercase!important;letter-spacing:.5px!important;margin-bottom:8px!important;display:block!important}
-#ftr-container .card-value{font-size:30px!important;font-weight:700!important;color:#1a1a2e!important;display:block!important}
-#ftr-container .card-value.danger{color:#dc3545!important}
-#ftr-container .group-controls{display:flex!important;align-items:center!important;gap:12px!important;margin-bottom:16px!important}
-#ftr-container .group-controls label{font-size:13px!important;font-weight:600!important;color:#555!important}
-#ftr-container .group-controls select{padding:6px 10px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important}
-#ftr-container .error-msg{background:#f8d7da!important;color:#842029!important;border:1px solid #f5c2c7!important;border-radius:4px!important;padding:12px 16px!important;margin-bottom:16px!important}
-#ftr-container .warn-msg{background:#fff3cd!important;color:#664d03!important;border:1px solid #ffecb5!important;border-radius:4px!important;padding:10px 14px!important;margin-bottom:16px!important}
-#ftr-container #ftr-loading{text-align:center!important;padding:40px!important;color:#666!important}
-#ftr-container .spinner{width:40px!important;height:40px!important;border:4px solid #e0e0e0!important;border-top-color:#dc3545!important;border-radius:50%!important;animation:spin .8s linear infinite!important;margin:0 auto 12px!important}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuel Theft Report</title>
+<style>
 @keyframes spin{to{transform:rotate(360deg)}}
-#ftr-container #ftr-tableWrapper{overflow-x:auto}
-#ftr-container #ftr-resultTable{width:100%!important;border-collapse:collapse!important;font-size:12px!important}
-#ftr-container #ftr-resultTable th{background-color:#1a1a2e!important;color:#fff!important;padding:8px 10px!important;text-align:left!important;font-weight:600!important;position:sticky!important;top:0!important;white-space:nowrap!important}
-#ftr-container #ftr-resultTable td{padding:6px 10px!important;border-bottom:1px solid #e0e0e0!important;white-space:nowrap!important;color:#333!important}
-#ftr-container #ftr-resultTable tbody tr:hover td{background-color:#fff5f5!important}
-#ftr-container #ftr-resultTable tbody tr:nth-child(even) td{background-color:#fafafa!important}
-#ftr-container #ftr-resultTable tbody tr:nth-child(even):hover td{background-color:#fff5f5!important}
-#ftr-container .theft-val{color:#dc3545!important;font-weight:700!important}
-#ftr-container .group-header td{background:#e8ecf0!important;font-weight:700!important;font-size:13px!important;padding:10px!important}
-#ftr-container .btn-verify{padding:3px 10px!important;background:#17a2b8!important;color:#fff!important;border:none!important;border-radius:3px!important;font-size:11px!important;cursor:pointer!important;white-space:nowrap!important;text-decoration:none!important;display:inline-block!important}
-#ftr-container .btn-verify:hover{background:#138496!important;color:#fff!important}
-#ftr-container #ftr-summaryTableWrapper{margin-top:24px}
-#ftr-container #ftr-summaryTableWrapper h3{font-size:16px!important;color:#1a1a2e!important;margin-bottom:10px!important}
-#ftr-container #ftr-summaryTable{width:auto!important;border-collapse:collapse!important;font-size:13px!important}
-#ftr-container #ftr-summaryTable th{background-color:#1a1a2e!important;color:#fff!important;padding:8px 14px!important;text-align:left!important;font-weight:600!important}
-#ftr-container #ftr-summaryTable td{padding:6px 14px!important;border-bottom:1px solid #e0e0e0!important;color:#333!important}
-#ftr-container #ftr-summaryTable tbody tr:hover td{background-color:#fff5f5!important}
-#ftr-container #ftr-summaryTable .theft-val{color:#dc3545!important;font-weight:700!important}
-</style></head><body><div id="ftr-container">
-<h1>Fuel Theft Report &mdash; All Vehicles</h1>
-<p class="subtitle">Database: <strong id="ftr-dbName">&mdash;</strong> &nbsp;|&nbsp; High-confidence siphoning events (ignition-off fuel drop)</p>
-<div class="controls">
-  <span class="ctrl-label">From:</span><input type="date" id="ftr-fromDate">
-  <span class="ctrl-label">To:</span><input type="date" id="ftr-toDate">
-  <span class="ctrl-label">Vehicle:</span><select id="ftr-vehicleSelect"><option value="__all__">All Vehicles</option></select>
-  <button id="ftr-btnRun" class="btn-primary">Run Detection</button>
-  <button id="ftr-btnExport" class="btn-secondary" style="display:none">Export CSV</button>
+#ftr-advPanel.show{display:flex!important;flex-wrap:wrap!important;gap:16px!important;}
+</style>
+</head>
+<body>
+<div id="ftr-container" style="font-family:Calibri,Arial,sans-serif;max-width:1600px;margin:0 auto;color:#222;box-sizing:border-box;border:2px solid #1F4E79;border-radius:10px;box-shadow:0 4px 20px rgba(31,78,121,.3);background:#fff;padding:0;overflow:hidden">
+
+  <div style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
+    <div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">Fuel Theft Report</h1>
+      <div style="font-size:14px;color:rgba(255,255,255,.9);margin-top:4px;font-weight:600">Database: <strong id="ftr-dbName">—</strong> &nbsp;|&nbsp; High-confidence siphoning events (ignition-off fuel drop)</div>
+    </div>
+  </div>
+
+  <div style="background:linear-gradient(180deg,#EBF3FB 0%,#D6E8F5 100%);border-left:4px solid #1F4E79;border-bottom:1px solid #B8CCE4;padding:14px 20px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">From</label>
+      <input type="date" id="ftr-fromDate" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">To</label>
+      <input type="date" id="ftr-toDate" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Vehicle</label>
+      <select id="ftr-vehicleSelect" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;min-width:160px"><option value="__all__">All Vehicles</option></select>
+    </div>
+    <button id="ftr-btnRun" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">Run Detection</button>
+    <button id="ftr-btnExport" style="display:none;padding:8px 22px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">&#8659; Export CSV</button>
+  </div>
+
+  <div style="padding:10px 20px 0;background:#f8f9fb;border-bottom:1px solid #B8CCE4">
+    <button id="ftr-btnAdvToggle" style="padding:6px 14px;background:#EBF3FB;color:#1F4E79;border:1px solid #B8CCE4;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px">Advanced Settings</button>
+  </div>
+
+  <div id="ftr-advPanel" class="adv-panel" style="display:none;background:#EBF3FB;border-bottom:1px solid #B8CCE4;padding:16px 20px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79">Min Decrease (%)</label>
+      <input type="number" id="ftr-paramMinDecrease" value="10" min="1" max="80" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:100px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79">Min Off (minutes)</label>
+      <input type="number" id="ftr-paramMinOff" value="5" min="1" max="60" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:100px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79">Cluster Gap (min)</label>
+      <input type="number" id="ftr-paramClusterGap" value="15" min="5" max="60" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:100px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79">Sample Size</label>
+      <input type="number" id="ftr-paramSampleSize" value="5" min="2" max="20" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:100px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79">Fuel Tap Diagnostic ID</label>
+      <input type="text" id="ftr-paramDiagId" value="aFzVpeQqXskGNRmG8avPJ9Q" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;width:280px">
+    </div>
+  </div>
+
+  <div id="ftr-progressArea" style="display:none;padding:10px 20px;background:#fff;border-bottom:1px solid #B8CCE4">
+    <div id="ftr-progressText" style="font-size:13px;color:#1F4E79;margin-bottom:6px">Loading...</div>
+    <div style="height:8px;background:#dce8f0;border-radius:4px;overflow:hidden">
+      <div id="ftr-progressBar" style="height:100%;background:#dc3545;border-radius:4px;transition:width .3s;width:0%"></div>
+    </div>
+  </div>
+
+  <div id="ftr-errorMsg" style="display:none;background:#fde8e8;color:#a00;border:1px solid #f5b8b8;border-radius:4px;padding:12px 16px;margin:12px 20px;font-size:14px"></div>
+  <div id="ftr-warnMsg" style="display:none;background:#fff3cd;color:#664d03;border:1px solid #ffecb5;border-radius:4px;padding:10px 16px;margin:8px 20px;font-size:13px"></div>
+
+  <div id="ftr-summaryCards" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Theft Events</div>
+      <div id="ftr-statTotal" style="font-size:28px;font-weight:800;color:#dc3545;display:block;line-height:1.1">0</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Vehicles Affected</div>
+      <div id="ftr-statVehicles" style="font-size:28px;font-weight:800;color:#dc3545;display:block;line-height:1.1">0</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Total Est. Stolen (L)</div>
+      <div id="ftr-statTotalStolen" style="font-size:28px;font-weight:800;color:#dc3545;display:block;line-height:1.1">0</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Avg Stolen / Event (L)</div>
+      <div id="ftr-statAvgStolen" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">0</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Avg Fuel Drop</div>
+      <div id="ftr-statAvgDrop" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">0%</div>
+    </div>
+  </div>
+
+  <div id="ftr-groupControls" style="display:none;align-items:center;gap:12px;padding:10px 20px;background:#f8f9fb;border-bottom:1px solid #B8CCE4">
+    <label style="font-size:13px;font-weight:700;color:#1F4E79">Group by:</label>
+    <select id="ftr-groupBy" style="padding:6px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:13px;color:#222;background:#fff">
+      <option value="none">None</option>
+      <option value="vehicle">Vehicle</option>
+      <option value="month">Month</option>
+    </select>
+  </div>
+
+  <div id="ftr-loading" style="display:none;text-align:center;padding:48px 20px;color:#666;background:#fff">
+    <div style="width:44px;height:44px;border:4px solid #dce8f0;border-top-color:#dc3545;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px"></div>
+    <p>Processing data &mdash; please wait&hellip;</p>
+  </div>
+
+  <div id="ftr-tableWrapper" style="display:none;border-top:2px solid #1F4E79;overflow-x:auto">
+    <table id="ftr-resultTable" style="width:100%;border-collapse:collapse;font-size:15px;min-width:1100px">
+      <thead>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-left:2px solid #1F4E79;border-bottom:2px solid #163960;">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">VIN</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Tank (L)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Ign Off (Local)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Ign On (Local)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Off Duration</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Before %</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">After %</th>
+          <th style="background:#8B0000;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Decrease %</th>
+          <th style="background:#8B0000;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Est. Stolen (L)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">GPS Location</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-right:2px solid #1F4E79;border-bottom:2px solid #163960;">Verify</th>
+        </tr>
+      </thead>
+      <tbody id="ftr-resultBody"></tbody>
+    </table>
+  </div>
+
+  <div id="ftr-summaryTableWrapper" style="display:none;border-top:2px solid #1F4E79;overflow-x:auto">
+    <div style="padding:14px 20px 6px;background:#EBF3FB;border-bottom:1px solid #B8CCE4">
+      <h3 style="margin:0;font-size:16px;font-weight:700;color:#1F4E79">Per-Vehicle Summary</h3>
+    </div>
+    <table id="ftr-summaryTable" style="width:auto;border-collapse:collapse;font-size:15px;margin:0">
+      <thead>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:11px 14px;text-align:left;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-left:2px solid #1F4E79;border-bottom:2px solid #163960;">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 14px;text-align:left;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-bottom:2px solid #163960;">VIN</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 14px;text-align:center;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Theft Events</th>
+          <th style="background:#8B0000;color:#fff;padding:11px 14px;text-align:center;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Total Est. Stolen (L)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 14px;text-align:center;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Avg Decrease %</th>
+          <th style="background:#8B0000;color:#fff;padding:11px 14px;text-align:center;font-size:14px;font-weight:700;border:1px solid #2E75B6;border-right:2px solid #1F4E79;border-bottom:2px solid #163960;">Max Decrease %</th>
+        </tr>
+      </thead>
+      <tbody id="ftr-summaryBody"></tbody>
+    </table>
+  </div>
+
+  <div style="padding:8px 20px">
+    <div id="ftr-count" style="font-size:13px;color:#666"></div>
+  </div>
 </div>
-<div><button id="ftr-btnAdvToggle" class="btn-toggle">Advanced Settings</button></div>
-<div id="ftr-advPanel" class="adv-panel">
-  <div class="adv-ctrl"><label>Min Decrease (%)</label><input type="number" id="ftr-paramMinDecrease" value="10" min="1" max="80"></div>
-  <div class="adv-ctrl"><label>Min Off (minutes)</label><input type="number" id="ftr-paramMinOff" value="5" min="1" max="60"></div>
-  <div class="adv-ctrl"><label>Cluster Gap (min)</label><input type="number" id="ftr-paramClusterGap" value="15" min="5" max="60"></div>
-  <div class="adv-ctrl"><label>Sample Size</label><input type="number" id="ftr-paramSampleSize" value="5" min="2" max="20"></div>
-  <div class="adv-ctrl"><label>Fuel Tap Diagnostic ID</label><input type="text" id="ftr-paramDiagId" value="aFzVpeQqXskGNRmG8avPJ9Q" class="diag-input"></div>
-</div>
-<div id="ftr-progressArea" class="progress-area" style="display:none">
-  <p class="progress-text" id="ftr-progressText">Loading...</p>
-  <div class="progress-bar-outer"><div class="progress-bar-inner" id="ftr-progressBar" style="width:0%"></div></div>
-</div>
-<div id="ftr-errorMsg" class="error-msg" style="display:none"></div>
-<div id="ftr-warnMsg" class="warn-msg" style="display:none"></div>
-<div id="ftr-summaryCards" class="summary-cards" style="display:none">
-  <div class="card"><span class="card-label">Theft Events</span><span class="card-value danger" id="ftr-statTotal">0</span></div>
-  <div class="card"><span class="card-label">Vehicles Affected</span><span class="card-value danger" id="ftr-statVehicles">0</span></div>
-  <div class="card"><span class="card-label">Total Est. Stolen (L)</span><span class="card-value danger" id="ftr-statTotalStolen">0</span></div>
-  <div class="card"><span class="card-label">Avg Stolen / Event (L)</span><span class="card-value" id="ftr-statAvgStolen">0</span></div>
-  <div class="card"><span class="card-label">Avg Fuel Drop</span><span class="card-value" id="ftr-statAvgDrop">0%</span></div>
-</div>
-<div id="ftr-groupControls" class="group-controls" style="display:none">
-  <label for="ftr-groupBy">Group by:</label>
-  <select id="ftr-groupBy"><option value="none">None</option><option value="vehicle">Vehicle</option><option value="month">Month</option></select>
-</div>
-<div id="ftr-loading" style="display:none"><div class="spinner"></div><p>Processing data &mdash; please wait...</p></div>
-<div id="ftr-tableWrapper" style="display:none">
-  <table id="ftr-resultTable">
-    <thead><tr>
-      <th>#</th><th>Vehicle</th><th>VIN</th><th>Tank (L)</th>
-      <th>Ign Off (Local)</th><th>Ign On (Local)</th><th>Off Duration</th>
-      <th>Before %</th><th>After %</th><th>Decrease %</th><th>Est. Stolen (L)</th>
-      <th>GPS Location</th><th>Verify</th>
-    </tr></thead>
-    <tbody id="ftr-resultBody"></tbody>
-  </table>
-</div>
-<div id="ftr-summaryTableWrapper" style="display:none">
-  <h3>Per-Vehicle Summary</h3>
-  <table id="ftr-summaryTable">
-    <thead><tr><th>Vehicle</th><th>VIN</th><th>Theft Events</th><th>Total Est. Stolen (L)</th><th>Avg Decrease %</th><th>Max Decrease %</th></tr></thead>
-    <tbody id="ftr-summaryBody"></tbody>
-  </table>
-</div>
-</div>
+
 <script>
 geotab.addin.fuelTheftReport = function () {
   "use strict";
@@ -368,11 +417,16 @@ geotab.addin.fuelTheftReport = function () {
     $("ftr-summaryCards").style.display = "flex";
     $("ftr-groupControls").style.display = "flex";
     $("ftr-btnExport").style.display = "inline-block";
+    $("ftr-count").textContent = n + " theft event(s) detected";
     renderTable();
     renderSummaryTable();
   }
 
   function renderTable() {
+    var B = "padding:10px 10px;border-bottom:1px solid #c8d8e8;border-right:1px solid #dce8f0;font-size:15px;vertical-align:middle;white-space:nowrap;";
+    var C = B + "text-align:center;";
+    var M = B + "font-family:Consolas,monospace;font-size:13px;text-align:center;";
+    var RED = C + "color:#dc3545;font-weight:700;";
     var groupBy = $("ftr-groupBy").value, tbody = $("ftr-resultBody");
     tbody.innerHTML = "";
     var sections = [];
@@ -388,8 +442,9 @@ geotab.addin.fuelTheftReport = function () {
     var num = 1;
     for (var s = 0; s < sections.length; s++) {
       if (sections[s].header) {
-        var htr = document.createElement("tr"); htr.className = "group-header";
-        htr.innerHTML = '<td colspan="13">' + escapeHtml(sections[s].header) + "</td>"; tbody.appendChild(htr);
+        var htr = document.createElement("tr");
+        htr.innerHTML = '<td colspan="13" style="background:#2E75B6;color:#fff;font-weight:700;font-size:14px;padding:10px 12px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;">' + escapeHtml(sections[s].header) + "</td>";
+        tbody.appendChild(htr);
       }
       for (var r = 0; r < sections[s].rows.length; r++) {
         var t = sections[s].rows[r], dev = allDevices[t.vehicleId];
@@ -399,20 +454,22 @@ geotab.addin.fuelTheftReport = function () {
         var tankStr = tankL ? tankL.toFixed(0) : "N/A";
         var gpsStr = fmtGPS(t.lat, t.lon);
         var link = buildMyGLink(t.vehicleId, t.offStart, t.offEnd);
+        var bg = num % 2 === 0 ? "background:#deeaf1;" : "background:#fff;";
         var tr = document.createElement("tr");
-        tr.innerHTML = "<td>" + num + "</td>" +
-          "<td>" + escapeHtml(t.vehicleName) + "</td>" +
-          "<td>" + escapeHtml(vin) + "</td>" +
-          "<td>" + tankStr + "</td>" +
-          "<td>" + fmtDT(t.offStart) + "</td>" +
-          "<td>" + fmtDT(t.offEnd) + "</td>" +
-          "<td>" + fmtDur(t.offDurMin) + "</td>" +
-          "<td>" + t.beforePct.toFixed(1) + "%</td>" +
-          "<td>" + t.afterPct.toFixed(1) + "%</td>" +
-          "<td class='theft-val'>-" + t.decreasePct.toFixed(1) + "%</td>" +
-          "<td class='theft-val'>" + stolenL + "</td>" +
-          "<td>" + escapeHtml(gpsStr) + "</td>" +
-          "<td><a href='" + link + "' target='_blank' class='btn-verify'>View</a></td>";
+        tr.innerHTML =
+          '<td style="' + C + bg + 'font-weight:700;color:#1F4E79;border-left:2px solid #1F4E79;">' + num + '</td>' +
+          '<td style="' + B + bg + 'font-weight:600;">' + escapeHtml(t.vehicleName) + '</td>' +
+          '<td style="' + B + bg + 'font-family:Consolas,monospace;font-size:12px;">' + escapeHtml(vin) + '</td>' +
+          '<td style="' + C + bg + '">' + tankStr + '</td>' +
+          '<td style="' + M + bg + '">' + fmtDT(t.offStart) + '</td>' +
+          '<td style="' + M + bg + '">' + fmtDT(t.offEnd) + '</td>' +
+          '<td style="' + C + bg + 'font-weight:600;">' + fmtDur(t.offDurMin) + '</td>' +
+          '<td style="' + C + bg + '">' + t.beforePct.toFixed(1) + '%</td>' +
+          '<td style="' + C + bg + 'color:#217346;font-weight:600;">' + t.afterPct.toFixed(1) + '%</td>' +
+          '<td style="' + RED + bg + '">-' + t.decreasePct.toFixed(1) + '%</td>' +
+          '<td style="' + RED + bg + '">' + stolenL + '</td>' +
+          '<td style="' + B + bg + 'font-size:12px;">' + escapeHtml(gpsStr) + '</td>' +
+          '<td style="' + C + bg + 'border-right:2px solid #1F4E79;"><a href="' + link + '" target="_blank" style="padding:4px 12px;background:#1F4E79;color:#fff;border-radius:4px;font-size:12px;font-weight:700;text-decoration:none;display:inline-block;">View</a></td>';
         tbody.appendChild(tr); num++;
       }
     }
@@ -420,6 +477,9 @@ geotab.addin.fuelTheftReport = function () {
   }
 
   function renderSummaryTable() {
+    var B = "padding:10px 14px;border-bottom:1px solid #c8d8e8;border-right:1px solid #dce8f0;font-size:15px;vertical-align:middle;white-space:nowrap;";
+    var C = B + "text-align:center;";
+    var RED = C + "color:#dc3545;font-weight:700;";
     var stats = {}, names = [];
     for (var i = 0; i < allThefts.length; i++) {
       var t = allThefts[i], vn = t.vehicleName, dev = allDevices[t.vehicleId];
@@ -434,13 +494,15 @@ geotab.addin.fuelTheftReport = function () {
       var vn = names[i], st = stats[vn];
       var avgDrop = (st.drops.reduce(function (s, v) { return s + v; }, 0) / st.drops.length).toFixed(1);
       var maxDrop = Math.max.apply(null, st.drops).toFixed(1);
+      var bg = i % 2 === 0 ? "background:#fff;" : "background:#deeaf1;";
       var tr = document.createElement("tr");
-      tr.innerHTML = "<td>" + escapeHtml(vn) + "</td>" +
-        "<td>" + escapeHtml(st.vin) + "</td>" +
-        "<td>" + st.count + "</td>" +
-        "<td class='theft-val'>" + (st.stolen > 0 ? st.stolen.toFixed(1) + " L" : "N/A") + "</td>" +
-        "<td>" + avgDrop + "%</td>" +
-        "<td class='theft-val'>" + maxDrop + "%</td>";
+      tr.innerHTML =
+        '<td style="' + B + bg + 'font-weight:600;border-left:2px solid #1F4E79;">' + escapeHtml(vn) + '</td>' +
+        '<td style="' + B + bg + 'font-family:Consolas,monospace;font-size:12px;">' + escapeHtml(st.vin) + '</td>' +
+        '<td style="' + C + bg + 'font-weight:700;color:#dc3545;">' + st.count + '</td>' +
+        '<td style="' + RED + bg + '">' + (st.stolen > 0 ? st.stolen.toFixed(1) + " L" : "N/A") + '</td>' +
+        '<td style="' + C + bg + '">' + avgDrop + '%</td>' +
+        '<td style="' + RED + bg + 'border-right:2px solid #1F4E79;">' + maxDrop + '%</td>';
       tbody.appendChild(tr);
     }
     $("ftr-summaryTableWrapper").style.display = "block";
@@ -488,4 +550,6 @@ geotab.addin.fuelTheftReport = function () {
     blur: function () {}
   };
 };
-</script></body></html>
+</script>
+</body>
+</html>
