@@ -1,0 +1,70 @@
+name: Validate Add-In Source
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate:
+    name: Validate Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for secrets in committed files
+        run: |
+          echo "Scanning for accidental credential patterns..."
+          # Fail if any tracked file contains common secret patterns
+          if git grep -iE "(password|sessionId|bearerToken|secret|api_key)\s*[:=]\s*['\"][^'\"]{8,}" \
+               -- ":(exclude).gitignore" ":(exclude)SECURITY.md" ":(exclude).github/" ; then
+            echo "FAIL: Potential credential found in source. Remove it and rotate the secret."
+            exit 1
+          fi
+          echo "OK: No credential patterns detected."
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          FAILED=0
+          for f in $(git ls-files "*.json"); do
+            python3 -m json.tool "$f" > /dev/null 2>&1 || { echo "INVALID JSON: $f"; FAILED=1; }
+          done
+          if [ $FAILED -eq 1 ]; then exit 1; fi
+          echo "OK: All JSON files are valid."
+
+      - name: Check add-in HTML files exist and are non-empty
+        run: |
+          echo "Checking add-in HTML files..."
+          REQUIRED=(
+            "addin_files/fuelHarnessReport.html"
+            "addin_files/fuelTheftReport.html"
+          )
+          FAILED=0
+          for f in "${REQUIRED[@]}"; do
+            if [ ! -s "$f" ]; then
+              echo "MISSING or EMPTY: $f"
+              FAILED=1
+            else
+              echo "OK: $f ($(wc -c < "$f") bytes)"
+            fi
+          done
+          if [ $FAILED -eq 1 ]; then exit 1; fi
+
+      - name: Check add-in JS file exists
+        run: |
+          [ -s "js/main.js" ] && echo "OK: js/main.js" || { echo "MISSING: js/main.js"; exit 1; }
+
+      - name: Confirm no data files were committed
+        run: |
+          echo "Checking for accidentally committed data files..."
+          FOUND=$(git ls-files "*.csv" "*.xlsx" "_device_map.json" 2>/dev/null)
+          if [ -n "$FOUND" ]; then
+            echo "FAIL: Data files found in repo — these must not be committed:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "OK: No data files committed."

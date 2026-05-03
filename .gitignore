@@ -22,3 +22,31 @@ current_settings*.json
 modified_settings.json
 ss_current.json
 fuel_usage_addin.zip
+
+# Data exports — never commit raw fleet data
+*.csv
+*.xlsx
+_device_map.json
+
+# Local utility/query scripts — use only on dev machine
+detect_fillups.py
+query_*.py
+query_*.sh
+
+# Credentials and secrets — should never enter git
+*.pem
+*.key
+*.env
+.env.*
+secrets.json
+*-pat.txt
+*_token.txt
+
+# Build artifacts
+*.pptx
+build_*.js
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
