@@ -95,12 +95,18 @@
     </div>
   </div>
 
-  <div id="ftr-groupControls" style="display:none;align-items:center;gap:12px;padding:10px 20px;background:#f8f9fb;border-bottom:1px solid #B8CCE4">
+  <div id="ftr-groupControls" style="display:none;align-items:center;gap:12px;padding:10px 20px;background:#f8f9fb;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
     <label style="font-size:13px;font-weight:700;color:#1F4E79">Group by:</label>
     <select id="ftr-groupBy" style="padding:6px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:13px;color:#222;background:#fff">
       <option value="none">None</option>
       <option value="vehicle">Vehicle</option>
       <option value="month">Month</option>
+    </select>
+    <label style="font-size:13px;font-weight:700;color:#1F4E79;margin-left:20px">Confidence:</label>
+    <select id="ftr-confidenceFilter" style="padding:6px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:13px;color:#222;background:#fff">
+      <option value="all">All Events</option>
+      <option value="high">HIGH only</option>
+      <option value="high-medium">HIGH + MEDIUM</option>
     </select>
   </div>
 
@@ -125,6 +131,8 @@
           <th style="background:#8B0000;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Decrease %</th>
           <th style="background:#8B0000;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Est. Stolen (L)</th>
           <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">GPS Location</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Confidence</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Recovery</th>
           <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-right:2px solid #1F4E79;border-bottom:2px solid #163960;">Verify</th>
         </tr>
       </thead>
@@ -269,6 +277,7 @@ geotab.addin.fuelTheftReport = function () {
       else { clusters.push(cur); cur = [readings[i]]; }
     }
     clusters.push(cur);
+
     var thefts = [];
     for (var i = 0; i < clusters.length - 1; i++) {
       var prev = clusters[i], next = clusters[i + 1];
@@ -281,10 +290,26 @@ geotab.addin.fuelTheftReport = function () {
       var after = head.reduce(function (s, r) { return s + r.val; }, 0) / head.length;
       var drop = before - after;
       if (drop >= params.minDecrease) {
+        // Check for recovery within 5 minutes after ignition turns back on
+        var recovery = 0, confidence = "HIGH";
+        var recoveryReadings = next.filter(function (r) {
+          var timeSinceGapEnd = (r.dt - gapEnd) / 60000;
+          return timeSinceGapEnd >= 0 && timeSinceGapEnd <= 5;
+        });
+        if (recoveryReadings.length > 0) {
+          var recoveryAvg = recoveryReadings.reduce(function (s, r) { return s + r.val; }, 0) / recoveryReadings.length;
+          recovery = Math.round((recoveryAvg - after) * 10) / 10;
+          var recoveryPct = Math.abs(recovery) / Math.abs(drop) * 100;
+          if (recoveryPct > 80) {
+            confidence = "LOW";
+          } else if (recoveryPct > 20) {
+            confidence = "MEDIUM";
+          }
+        }
         thefts.push({
           dt: gapEnd, beforePct: Math.round(before * 10) / 10, afterPct: Math.round(after * 10) / 10,
           decreasePct: Math.round(drop * 10) / 10, offStart: ov.offStart, offEnd: ov.offEnd,
-          offDurMin: ov.offDurMin, lat: null, lon: null
+          offDurMin: ov.offDurMin, lat: null, lon: null, confidence: confidence, recovery: recovery
         });
       }
     }
@@ -421,28 +446,44 @@ geotab.addin.fuelTheftReport = function () {
     renderSummaryTable();
   }
 
+  function confidenceBadge(conf) {
+    var bg = conf === "HIGH" ? "217346" : conf === "MEDIUM" ? "7F6000" : "8B0000";
+    var label = conf === "LOW" ? "LOW (anomaly?)" : conf;
+    return '<span style="padding:3px 9px;border-radius:10px;background:#' + bg + ';color:#fff;font-size:11px;font-weight:700;">' + label + '</span>';
+  }
+
+  function getFilteredThefts() {
+    var filter = $("ftr-confidenceFilter").value;
+    return allThefts.filter(function (t) {
+      if (filter === "high") return t.confidence === "HIGH";
+      if (filter === "high-medium") return t.confidence === "HIGH" || t.confidence === "MEDIUM";
+      return true;
+    });
+  }
+
   function renderTable() {
     var B = "padding:10px 10px;border-bottom:1px solid #c8d8e8;border-right:1px solid #dce8f0;font-size:15px;vertical-align:middle;white-space:nowrap;";
     var C = B + "text-align:center;";
     var M = B + "font-family:Consolas,monospace;font-size:13px;text-align:center;";
-    var RED = C + "color:#dc3545;font-weight:700;";
+    var REDC = C + "color:#dc3545;font-weight:700;";
     var groupBy = $("ftr-groupBy").value, tbody = $("ftr-resultBody");
     tbody.innerHTML = "";
+    var filtered = getFilteredThefts();
     var sections = [];
     if (groupBy === "vehicle") {
       var grp = {}, ord = [];
-      for (var i = 0; i < allThefts.length; i++) { var vn = allThefts[i].vehicleName; if (!grp[vn]) { grp[vn] = []; ord.push(vn); } grp[vn].push(allThefts[i]); }
+      for (var i = 0; i < filtered.length; i++) { var vn = filtered[i].vehicleName; if (!grp[vn]) { grp[vn] = []; ord.push(vn); } grp[vn].push(filtered[i]); }
       ord.sort(); for (var i = 0; i < ord.length; i++) sections.push({ header: ord[i] + " (" + grp[ord[i]].length + " events)", rows: grp[ord[i]] });
     } else if (groupBy === "month") {
       var grp = {}, ord = [];
-      for (var i = 0; i < allThefts.length; i++) { var mk = monthKey(allThefts[i].dt); if (!grp[mk]) { grp[mk] = []; ord.push(mk); } grp[mk].push(allThefts[i]); }
+      for (var i = 0; i < filtered.length; i++) { var mk = monthKey(filtered[i].dt); if (!grp[mk]) { grp[mk] = []; ord.push(mk); } grp[mk].push(filtered[i]); }
       ord.sort(); for (var i = 0; i < ord.length; i++) sections.push({ header: monthLabel(ord[i]) + " (" + grp[ord[i]].length + " events)", rows: grp[ord[i]] });
-    } else { sections = [{ header: null, rows: allThefts }]; }
+    } else { sections = [{ header: null, rows: filtered }]; }
     var num = 1;
     for (var s = 0; s < sections.length; s++) {
       if (sections[s].header) {
         var htr = document.createElement("tr");
-        htr.innerHTML = '<td colspan="13" style="background:#2E75B6;color:#fff;font-weight:700;font-size:14px;padding:10px 12px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;">' + escapeHtml(sections[s].header) + "</td>";
+        htr.innerHTML = '<td colspan="15" style="background:#2E75B6;color:#fff;font-weight:700;font-size:14px;padding:10px 12px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;">' + escapeHtml(sections[s].header) + "</td>";
         tbody.appendChild(htr);
       }
       for (var r = 0; r < sections[s].rows.length; r++) {
@@ -454,6 +495,7 @@ geotab.addin.fuelTheftReport = function () {
         var gpsStr = fmtGPS(t.lat, t.lon);
         var link = buildMyGLink(t.vehicleId, t.offStart, t.offEnd);
         var bg = num % 2 === 0 ? "background:#deeaf1;" : "background:#fff;";
+        var recStr = t.recovery > 0 ? "+" + t.recovery.toFixed(1) + "%" : "—";
         var tr = document.createElement("tr");
         tr.innerHTML =
           '<td style="' + C + bg + 'font-weight:700;color:#1F4E79;border-left:2px solid #1F4E79;">' + num + '</td>' +
@@ -465,14 +507,20 @@ geotab.addin.fuelTheftReport = function () {
           '<td style="' + C + bg + 'font-weight:600;">' + fmtDur(t.offDurMin) + '</td>' +
           '<td style="' + C + bg + '">' + t.beforePct.toFixed(1) + '%</td>' +
           '<td style="' + C + bg + 'color:#217346;font-weight:600;">' + t.afterPct.toFixed(1) + '%</td>' +
-          '<td style="' + RED + bg + '">-' + t.decreasePct.toFixed(1) + '%</td>' +
-          '<td style="' + RED + bg + '">' + stolenL + '</td>' +
+          '<td style="' + REDC + bg + '">-' + t.decreasePct.toFixed(1) + '%</td>' +
+          '<td style="' + REDC + bg + '">' + stolenL + '</td>' +
           '<td style="' + B + bg + 'font-size:12px;">' + escapeHtml(gpsStr) + '</td>' +
+          '<td style="' + C + bg + '">' + confidenceBadge(t.confidence || "HIGH") + '</td>' +
+          '<td style="' + C + bg + 'font-size:12px;color:#555;">' + recStr + '</td>' +
           '<td style="' + C + bg + 'border-right:2px solid #1F4E79;"><a href="' + link + '" target="_blank" style="padding:4px 12px;background:#1F4E79;color:#fff;border-radius:4px;font-size:12px;font-weight:700;text-decoration:none;display:inline-block;">View</a></td>';
         tbody.appendChild(tr); num++;
       }
     }
     $("ftr-tableWrapper").style.display = "block";
+    var high = allThefts.filter(function(t){ return t.confidence==="HIGH"; }).length;
+    var med  = allThefts.filter(function(t){ return t.confidence==="MEDIUM"; }).length;
+    var low  = allThefts.filter(function(t){ return t.confidence==="LOW"; }).length;
+    $("ftr-count").textContent = allThefts.length + " theft event(s) detected — HIGH: " + high + "  MEDIUM: " + med + "  LOW (anomaly): " + low + "  |  Showing: " + filtered.length;
   }
 
   function renderSummaryTable() {
@@ -509,7 +557,7 @@ geotab.addin.fuelTheftReport = function () {
 
   function exportCsv() {
     if (!allThefts.length) return;
-    var lines = ["\uFEFF\"#\",\"Vehicle\",\"VIN\",\"Tank (L)\",\"Ign Off (Local)\",\"Ign On (Local)\",\"Off Duration\",\"Before %\",\"After %\",\"Decrease %\",\"Est. Stolen (L)\",\"GPS Lat\",\"GPS Lon\",\"MyGeotab Link\""];
+    var lines = ["\uFEFF\"#\",\"Vehicle\",\"VIN\",\"Tank (L)\",\"Ign Off (Local)\",\"Ign On (Local)\",\"Off Duration\",\"Before %\",\"After %\",\"Decrease %\",\"Est. Stolen (L)\",\"GPS Lat\",\"GPS Lon\",\"Confidence\",\"Recovery %\",\"MyGeotab Link\""];
     for (var i = 0; i < allThefts.length; i++) {
       var t = allThefts[i], dev = allDevices[t.vehicleId];
       var tankL = dev && dev.tankL ? dev.tankL : 0;
@@ -518,7 +566,8 @@ geotab.addin.fuelTheftReport = function () {
       lines.push((i + 1) + ",\"" + (t.vehicleName || "").replace(/"/g, '""') + "\",\"" + vin + "\"," +
         (tankL || "N/A") + ",\"" + fmtDT(t.offStart) + "\",\"" + fmtDT(t.offEnd) + "\",\"" + fmtDur(t.offDurMin) + "\"," +
         t.beforePct.toFixed(1) + "," + t.afterPct.toFixed(1) + "," + t.decreasePct.toFixed(1) + "," + stolenL + "," +
-        (t.lat != null ? t.lat.toFixed(6) : "N/A") + "," + (t.lon != null ? t.lon.toFixed(6) : "N/A") + ",\"" + buildMyGLink(t.vehicleId, t.offStart, t.offEnd) + "\"");
+        (t.lat != null ? t.lat.toFixed(6) : "N/A") + "," + (t.lon != null ? t.lon.toFixed(6) : "N/A") + ",\"" + (t.confidence || "HIGH") + "\"," +
+        (t.recovery != null ? t.recovery : "\u2014") + ",\"" + buildMyGLink(t.vehicleId, t.offStart, t.offEnd) + "\"");
     }
     var csv = lines.join("\n");
     var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -547,6 +596,7 @@ geotab.addin.fuelTheftReport = function () {
         this.textContent = open ? "Hide Advanced Settings" : "Advanced Settings";
       });
       $("ftr-groupBy").addEventListener("change", function () { if (allThefts.length) renderTable(); });
+      $("ftr-confidenceFilter").addEventListener("change", function () { if (allThefts.length) renderTable(); });
       loadDevices(function () { callback(); });
     },
     focus: function (freshApi, freshState) { api = freshApi; state = freshState; },
