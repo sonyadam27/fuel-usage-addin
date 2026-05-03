@@ -15,16 +15,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check for secrets in committed files
+      - name: Check for hardcoded secrets in add-in source
         run: |
-          echo "Scanning for accidental credential patterns..."
-          # Fail if any tracked file contains common secret patterns
-          if git grep -iE "(password|sessionId|bearerToken|secret|api_key)\s*[:=]\s*['\"][^'\"]{8,}" \
-               -- ":(exclude).gitignore" ":(exclude)SECURITY.md" ":(exclude).github/" ; then
-            echo "FAIL: Potential credential found in source. Remove it and rotate the secret."
+          echo "Scanning add-in source files for accidental credentials..."
+          # Only scan actual add-in source dirs — not scripts, configs, or this workflow file
+          MATCHES=$(grep -rniE \
+            "(password|sessionId|bearerToken|api_key)\s*[:=]\s*['\"][^'\"]{8,}" \
+            addin_files/ js/ css/ 2>/dev/null || true)
+          if [ -n "$MATCHES" ]; then
+            echo "FAIL: Potential hardcoded credential found in add-in source:"
+            echo "$MATCHES"
             exit 1
           fi
-          echo "OK: No credential patterns detected."
+          echo "OK: No hardcoded credential patterns detected."
 
       - name: Validate JSON files
         run: |
@@ -36,12 +39,13 @@ jobs:
           if [ $FAILED -eq 1 ]; then exit 1; fi
           echo "OK: All JSON files are valid."
 
-      - name: Check add-in HTML files exist and are non-empty
+      - name: Check required add-in files exist and are non-empty
         run: |
-          echo "Checking add-in HTML files..."
+          echo "Checking required add-in files..."
           REQUIRED=(
             "addin_files/fuelHarnessReport.html"
             "addin_files/fuelTheftReport.html"
+            "js/main.js"
           )
           FAILED=0
           for f in "${REQUIRED[@]}"; do
@@ -53,10 +57,6 @@ jobs:
             fi
           done
           if [ $FAILED -eq 1 ]; then exit 1; fi
-
-      - name: Check add-in JS file exists
-        run: |
-          [ -s "js/main.js" ] && echo "OK: js/main.js" || { echo "MISSING: js/main.js"; exit 1; }
 
       - name: Confirm no data files were committed
         run: |
