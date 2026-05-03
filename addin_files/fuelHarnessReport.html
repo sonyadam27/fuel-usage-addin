@@ -125,7 +125,7 @@ table.fhr-table td:last-child{border-right:none}
           <th data-col="serial"  style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Serial</th>
           <th data-col="fueleco" style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Fuel Economy (Km/L)</th>
           <th data-col="fuellvl" style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Fuel Level %</th>
-          <th data-col="analog"  style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Analog Input</th>
+          <th data-col="analog"  style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Analog Input (V)</th>
           <th data-col="fuelts"  style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Fuel Level TS</th>
           <th data-col="analogts" style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Analog TS</th>
           <th data-col="delta"   style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;cursor:pointer;user-select:none;">Delta (s)</th>
@@ -146,7 +146,7 @@ geotab.addin.fuelHarnessReport = function () {
   "use strict";
 
   var HARNESS_DIAG = "aFzVpeQqXskGNRmG8avPJ9Q";
-  var ANALOG_DIAG  = "a4Cq3dWtCV0yoo9j_v__LbQ";
+  var ANALOG_DIAG  = "aMahgo0xe60CRelGKZiSeig";
   var FILL_THRESH  = 20;    // % rise to count as a fill-up (for lastFillDt detection)
   var UTC7_MS      = 7 * 3600 * 1000;
   var _api, _rows = [], _sortCol = "vehicle", _sortAsc = true;
@@ -258,7 +258,7 @@ geotab.addin.fuelHarnessReport = function () {
       if (r.analog == null) {
         cells += '<td style="' + TD_NA + '">N/A</td>';
       } else {
-        cells += '<td style="' + TD_CTR + rowBg + '">' + r.analog.toFixed(4) + '</td>';
+        cells += '<td style="' + TD_CTR + rowBg + '">' + r.analog.toFixed(4) + ' V</td>';
       }
 
       // Fuel Level TS
@@ -523,7 +523,7 @@ geotab.addin.fuelHarnessReport = function () {
     var headers = [
       "#", "Vehicle", "Serial",
       "Fuel Economy (Km/L)",
-      "Fuel Level %", "Analog Input",
+      "Fuel Level %", "Analog Input (V)",
       "Fuel Level TS (UTC+7)", "Analog TS (UTC+7)", "Delta (s)", "Last Fill-Up (UTC+7)"
     ];
     var lines = [headers.map(function (h) { return '"' + h + '"'; }).join(",")];
@@ -534,7 +534,7 @@ geotab.addin.fuelHarnessReport = function () {
         '"' + (r.serial  || "").replace(/"/g, '""') + '"',
         r.fuelEco != null ? r.fuelEco.toFixed(2) : "",
         r.fuelLvl != null ? r.fuelLvl.toFixed(1) + "%" : "",
-        r.analog  != null ? r.analog.toFixed(4)  : "",
+        r.analog  != null ? r.analog.toFixed(4) + " V"  : "",
         '"' + (toUTC7(r.fuelTs)     || "") + '"',
         '"' + (toUTC7(r.analogTs)   || "") + '"',
         r.delta   != null ? r.delta + "s" : "",
