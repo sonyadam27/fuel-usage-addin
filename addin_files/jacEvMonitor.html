@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAC EV Monitor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a2332; }
+
+  .ev-header {
+    background: linear-gradient(135deg, #0d3b6e 0%, #1565c0 100%);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .ev-header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
+  .ev-header-right { display: flex; align-items: center; gap: 12px; }
+
+  .device-select {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    min-width: 220px;
+    cursor: pointer;
+  }
+  .device-select option { background: #1a2332; color: #fff; }
+
+  .refresh-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .refresh-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .last-update {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+  }
+
+  .ev-body { padding: 20px 24px; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .status-dot.on  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+  .status-dot.off { background: #94a3b8; }
+  .status-label { font-weight: 500; }
+  .status-sep { color: #cbd5e1; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; }
+  .card-value { font-size: 32px; font-weight: 700; line-height: 1; }
+  .card-unit  { font-size: 13px; color: #64748b; font-weight: 400; }
+  .card-sub   { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  .card.soc   .card-value { color: #0d9488; }
+  .card.soc.mid .card-value { color: #f59e0b; }
+  .card.soc.low .card-value { color: #ef4444; }
+  .card.temp  .card-value { color: #3b82f6; }
+  .card.volt  .card-value { color: #8b5cf6; }
+  .card.motor .card-value { color: #0ea5e9; }
+
+  .soc-bar-wrap { margin-top: 8px; }
+  .soc-bar-bg { background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden; }
+  .soc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .soc-bar-fill.high { background: linear-gradient(90deg, #10b981, #34d399); }
+  .soc-bar-fill.mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .soc-bar-fill.low  { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .badge.on    { background: #dcfce7; color: #166534; }
+  .badge.off   { background: #f1f5f9; color: #475569; }
+  .badge.charging { background: #dbeafe; color: #1d4ed8; }
+  .badge.dot   { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  .history-section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .history-section h2 { font-size: 14px; font-weight: 600; color: #1a2332; margin-bottom: 16px; }
+
+  .chart-wrap { position: relative; height: 160px; }
+  canvas#socChart { width: 100% !important; height: 160px !important; }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+  .error-msg {
+    text-align: center;
+    padding: 20px;
+    color: #ef4444;
+    font-size: 13px;
+    background: #fef2f2;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="ev-header">
+  <h1>⚡ JAC EV Monitor</h1>
+  <div class="ev-header-right">
+    <select class="device-select" id="deviceSelect">
+      <option value="">Loading devices...</option>
+    </select>
+    <button class="refresh-btn" id="refreshBtn" onclick="window._evMonitor && window._evMonitor.refresh()">Refresh</button>
+    <span class="last-update" id="lastUpdate">—</span>
+  </div>
+</div>
+
+<div class="ev-body">
+  <div id="statusBar" class="status-bar" style="display:none">
+    <span class="status-dot off" id="ignDot"></span>
+    <span class="status-label" id="ignLabel">Ignition OFF</span>
+    <span class="status-sep">|</span>
+    <span id="chargeLabel">Not Charging</span>
+    <span class="status-sep">|</span>
+    <span id="driveLabel">—</span>
+    <span class="status-sep">|</span>
+    <span id="locationLabel">—</span>
+  </div>
+
+  <div id="loadingMsg" class="loading">Loading EV data...</div>
+  <div id="errorMsg" class="error-msg" style="display:none"></div>
+
+  <div id="cardGrid" class="grid" style="display:none">
+
+    <div class="card soc" id="cardSoc">
+      <div class="card-label">State of Charge</div>
+      <div><span class="card-value" id="valSoc">—</span><span class="card-unit"> %</span></div>
+      <div class="soc-bar-wrap">
+        <div class="soc-bar-bg"><div class="soc-bar-fill high" id="socBar" style="width:0%"></div></div>
+      </div>
+      <div class="card-sub" id="subSoc">—</div>
+    </div>
+
+    <div class="card temp" id="cardTemp">
+      <div class="card-label">Battery Temperature</div>
+      <div><span class="card-value" id="valTemp">—</span><span class="card-unit"> °C</span></div>
+      <div class="card-sub" id="subTemp">—</div>
+    </div>
+
+    <div class="card volt" id="cardVolt">
+      <div class="card-label">12V System</div>
+      <div><span class="card-value" id="valVolt">—</span><span class="card-unit"> V</span></div>
+      <div class="card-sub">GO device supply</div>
+    </div>
+
+    <div class="card" id="cardCharge">
+      <div class="card-label">Charge State</div>
+      <div class="card-value" style="font-size:20px;margin-top:6px" id="valCharge">—</div>
+      <div id="badgeCharge"></div>
+    </div>
+
+    <div class="card motor" id="cardMotorA">
+      <div class="card-label">Motor Channel A</div>
+      <div><span class="card-value" id="valMotorA">—</span></div>
+      <div class="card-sub">Live reading</div>
+    </div>
+
+    <div class="card motor" id="cardMotorB">
+      <div class="card-label">Motor Channel B</div>
+      <div><span class="card-value" id="valMotorB">—</span></div>
+      <div class="card-sub">Live reading</div>
+    </div>
+
+    <div class="card" id="cardEcu">
+      <div class="card-label">ECU Status</div>
+      <div><span class="card-value" style="font-size:22px" id="valEcu">—</span></div>
+      <div class="card-sub" id="subEcu">—</div>
+    </div>
+
+    <div class="card" id="cardOdo">
+      <div class="card-label">Odometer</div>
+      <div><span class="card-value" style="font-size:24px" id="valOdo">—</span><span class="card-unit"> km</span></div>
+      <div class="card-sub" id="subEngHrs">—</div>
+    </div>
+
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <h2>SoC History — Last 7 Days</h2>
+    <div class="chart-wrap">
+      <canvas id="socChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+geotab.addin.jacEvMonitor = function() {
+  'use strict';
+
+  const DIAG = {
+    soc:       'a4Cq3dWtCV0yoo9j_v__LbQ',
+    chargeState: 'aV90hCq8zakusGKE1UsfXrw',
+    ready:     'anjw6IIGoRU2ZHeUKGlekpg',
+    driveMode: 'aVVhkvxM34U6-4caL3hDQmg',
+    ecuStatus: 'aTWDkdT3qWEy_M_tENiZcdg',
+    battTemp:  'aFzVpeQqXskGNRmG8avPJ9Q',
+    motorA:    'ajfqpJjtowEy9j99LTeB2Gg',
+    motorB:    'aAjxil0OkYUO72Ydmz5AVog',
+    volt12:    'DiagnosticGoDeviceVoltageId',
+    ignition:  'DiagnosticIgnitionId',
+  };
+
+  let _api, _devices = [], _selectedId = '', _refreshTimer = null, _chartCtx = null, _chartData = { labels: [], values: [] };
+
+  // ── helpers ──────────────────────────────────────────────────────
+  function el(id) { return document.getElementById(id); }
+
+  function fmt(val, decimals) {
+    if (val === null || val === undefined) return '—';
+    return Number(val).toFixed(decimals !== undefined ? decimals : 1);
+  }
+
+  function socClass(pct) {
+    if (pct >= 60) return 'high';
+    if (pct >= 30) return 'mid';
+    return 'low';
+  }
+
+  function toWIB(isoStr) {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    return d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + ' WIB';
+  }
+
+  // ── API wrappers ──────────────────────────────────────────────────
+  function apiCall(method, params) {
+    return new Promise(function(resolve, reject) {
+      _api.call(method, params, resolve, reject);
+    });
+  }
+
+  function getLatestStatus(deviceId, diagIds) {
+    return apiCall('Get', {
+      typeName: 'StatusData',
+      search: {
+        deviceSearch: { id: deviceId },
+        diagnosticSearch: diagIds.map(function(id) { return { id: id }; }),
+        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      }
+    });
+  }
+
+  function getDeviceStatus(deviceId) {
+    return apiCall('Get', {
+      typeName: 'DeviceStatusInfo',
+      search: { deviceSearch: { id: deviceId } }
+    });
+  }
+
+  function getDeviceDetails(deviceId) {
+    return apiCall('Get', {
+      typeName: 'Device',
+      search: { id: deviceId }
+    });
+  }
+
+  function getSocHistory(deviceId) {
+    const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    return apiCall('Get', {
+      typeName: 'StatusData',
+      search: {
+        deviceSearch: { id: deviceId },
+        diagnosticSearch: [{ id: DIAG.soc }],
+        fromDate: from,
+      }
+    });
+  }
+
+  // ── populate devices ──────────────────────────────────────────────
+  function loadDevices() {
+    return apiCall('Get', {
+      typeName: 'Device',
+      search: { groups: [{ id: 'GroupBatteryElectricVehicleId' }] }
+    }).then(function(devices) {
+      _devices = devices.filter(function(d) {
+        return d.name && d.name.toLowerCase().indexOf('jac') !== -1;
+      });
+      if (!_devices.length) {
+        _devices = devices;
+      }
+      const sel = el('deviceSelect');
+      sel.innerHTML = '';
+      _devices.forEach(function(d) {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        sel.appendChild(opt);
+      });
+      if (_devices.length > 0) {
+        _selectedId = _devices[0].id;
+        sel.value = _selectedId;
+      }
+    });
+  }
+
+  // ── render cards ──────────────────────────────────────────────────
+  function renderData(statusRecords, deviceInfo) {
+    // Group records: keep latest per diagnostic
+    const latest = {};
+    statusRecords.forEach(function(r) {
+      const id = r.diagnostic.id;
+      if (!latest[id] || r.dateTime > latest[id].dateTime) {
+        latest[id] = r;
+      }
+    });
+
+    function val(key) { return latest[DIAG[key]] ? latest[DIAG[key]].data : null; }
+    function ts(key)  { return latest[DIAG[key]] ? latest[DIAG[key]].dateTime : null; }
+
+    // SoC
+    const soc = val('soc');
+    if (soc !== null) {
+      const pct = Math.min(100, Math.max(0, soc));
+      const cls = socClass(pct);
+      el('valSoc').textContent = fmt(soc, 0);
+      el('socBar').style.width = pct + '%';
+      el('socBar').className = 'soc-bar-fill ' + cls;
+      el('cardSoc').className = 'card soc' + (cls === 'high' ? '' : ' ' + cls);
+      el('subSoc').textContent = 'Updated ' + toWIB(ts('soc'));
+    }
+
+    // Battery Temp
+    const temp = val('battTemp');
+    if (temp !== null) {
+      el('valTemp').textContent = fmt(temp, 1);
+      let tempStatus = 'Normal';
+      if (temp > 45) tempStatus = 'Warm';
+      if (temp > 55) tempStatus = 'High — monitor';
+      el('subTemp').textContent = tempStatus + ' · ' + toWIB(ts('battTemp'));
+    }
+
+    // 12V
+    const v12 = val('volt12');
+    if (v12 !== null) {
+      el('valVolt').textContent = fmt(v12, 2);
+    }
+
+    // Charge State
+    const chg = val('chargeState');
+    if (chg !== null) {
+      const isCharging = chg === 1;
+      el('valCharge').textContent = isCharging ? 'Charging' : 'Not Charging';
+      el('badgeCharge').innerHTML = isCharging
+        ? '<span class="badge charging"><span class="badge-dot">⚡</span> Active</span>'
+        : '<span class="badge off"><span>○</span> Inactive</span>';
+    }
+
+    // Motor channels
+    const mA = val('motorA');
+    if (mA !== null) el('valMotorA').textContent = fmt(mA, 0);
+    const mB = val('motorB');
+    if (mB !== null) el('valMotorB').textContent = fmt(mB, 0);
+
+    // ECU Status
+    const ecu = val('ecuStatus');
+    if (ecu !== null) {
+      el('valEcu').textContent = ecu;
+      el('subEcu').textContent = ecu === 136 ? 'Normal (0x88)' : 'Code: 0x' + ecu.toString(16).toUpperCase();
+    }
+
+    // Ignition & status bar
+    const ign = val('ignition');
+    const ready = val('ready');
+    const drive = val('driveMode');
+    const ignOn = ign === 1 || ready === 1;
+    const dot = el('ignDot');
+    dot.className = 'status-dot ' + (ignOn ? 'on' : 'off');
+    el('ignLabel').textContent = ignOn ? 'Ignition ON' : 'Ignition OFF';
+    el('chargeLabel').textContent = chg === 1 ? '⚡ Charging' : 'Not Charging';
+    el('driveLabel').textContent = drive !== null ? 'Drive Mode: ' + drive : '—';
+
+    // Device info (location, odometer)
+    if (deviceInfo && deviceInfo.length > 0) {
+      const info = deviceInfo[0];
+      const loc = info.latitude !== undefined
+        ? info.latitude.toFixed(4) + '°, ' + info.longitude.toFixed(4) + '°'
+        : 'Unknown';
+      el('locationLabel').textContent = '📍 ' + loc;
+    }
+
+    if (deviceInfo && deviceInfo.length > 0) {
+      const di = deviceInfo[0];
+      if (di.currentStateDuration !== undefined) {
+        const odo = di.odometer !== undefined ? Math.round(di.odometer / 1000) : null;
+        if (odo) el('valOdo').textContent = odo.toLocaleString();
+      }
+    }
+
+    el('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+  }
+
+  // ── SoC history chart ─────────────────────────────────────────────
+  function drawChart(records) {
+    const canvas = el('socChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth, H = 160;
+    canvas.width = W; canvas.height = H;
+
+    const pts = records
+      .filter(function(r) { return r.diagnostic.id === DIAG.soc; })
+      .sort(function(a, b) { return a.dateTime < b.dateTime ? -1 : 1; });
+
+    if (pts.length < 2) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Not enough history data', W / 2, H / 2);
+      return;
+    }
+
+    const values = pts.map(function(p) { return Math.min(100, p.data); });
+    const minV = 0, maxV = 100;
+    const pad = { top: 16, right: 16, bottom: 28, left: 36 };
+    const cW = W - pad.left - pad.right;
+    const cH = H - pad.top - pad.bottom;
+
+    // Grid lines
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    [0, 25, 50, 75, 100].forEach(function(v) {
+      const y = pad.top + cH - (v / maxV) * cH;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(v + '%', pad.left - 4, y + 3);
+    });
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, 'rgba(16,185,129,0.3)');
+    grad.addColorStop(1, 'rgba(16,185,129,0)');
+
+    ctx.beginPath();
+    pts.forEach(function(p, i) {
+      const x = pad.left + (i / (pts.length - 1)) * cW;
+      const y = pad.top + cH - ((Math.min(100, p.data) - minV) / (maxV - minV)) * cH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(pad.left + cW, pad.top + cH);
+    ctx.lineTo(pad.left, pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2;
+    pts.forEach(function(p, i) {
+      const x = pad.left + (i / (pts.length - 1)) * cW;
+      const y = pad.top + cH - ((Math.min(100, p.data) - minV) / (maxV - minV)) * cH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Date labels
+    const days = [0, Math.floor(pts.length / 2), pts.length - 1];
+    days.forEach(function(i) {
+      const x = pad.left + (i / (pts.length - 1)) * cW;
+      const d = new Date(pts[i].dateTime);
+      const label = (d.getMonth() + 1) + '/' + d.getDate();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, x, H - 8);
+    });
+  }
+
+  // ── main fetch & render ───────────────────────────────────────────
+  function fetchAndRender() {
+    if (!_selectedId) return;
+    el('loadingMsg').style.display = 'none';
+    el('errorMsg').style.display = 'none';
+
+    const diagIds = Object.values(DIAG);
+
+    Promise.all([
+      getLatestStatus(_selectedId, diagIds),
+      getDeviceStatus(_selectedId),
+      getSocHistory(_selectedId)
+    ]).then(function(results) {
+      const statusRecords = results[0];
+      const deviceInfo    = results[1];
+      const socHistory    = results[2];
+
+      el('cardGrid').style.display = 'grid';
+      el('statusBar').style.display = 'flex';
+      el('historySection').style.display = 'block';
+
+      renderData(statusRecords, deviceInfo);
+      drawChart(socHistory);
+    }).catch(function(err) {
+      el('errorMsg').textContent = 'Error loading data: ' + (err.message || JSON.stringify(err));
+      el('errorMsg').style.display = 'block';
+    });
+  }
+
+  // ── auto-refresh ──────────────────────────────────────────────────
+  function startRefresh() {
+    if (_refreshTimer) clearInterval(_refreshTimer);
+    _refreshTimer = setInterval(fetchAndRender, 30000);
+  }
+
+  // ── public interface ──────────────────────────────────────────────
+  const monitor = {
+    refresh: function() { fetchAndRender(); },
+  };
+  window._evMonitor = monitor;
+
+  return {
+    initialize: function(api, state, callback) {
+      _api = api;
+      loadDevices().then(function() {
+        el('deviceSelect').addEventListener('change', function(e) {
+          _selectedId = e.target.value;
+          el('cardGrid').style.display = 'none';
+          el('historySection').style.display = 'none';
+          el('loadingMsg').style.display = 'block';
+          fetchAndRender();
+        });
+        callback();
+      }).catch(function(err) {
+        el('loadingMsg').style.display = 'none';
+        el('errorMsg').textContent = 'Failed to load devices: ' + (err.message || JSON.stringify(err));
+        el('errorMsg').style.display = 'block';
+        callback();
+      });
+    },
+
+    focus: function(api, state) {
+      _api = api;
+      fetchAndRender();
+      startRefresh();
+    },
+
+    blur: function() {
+      if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+    }
+  };
+};
+</script>
+</body>
+</html>
