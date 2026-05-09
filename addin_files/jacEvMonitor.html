@@ -198,6 +198,8 @@ geotab.addin.jacEvMonitor = function() {
 
       if (r.soc === null) {
         cells += '<td style="' + TD_NA + '">N/A</td>';
+      } else if (r.soc > 100) {
+        cells += '<td style="' + TD_NA + '" title="Raw value: ' + r.soc + '">Invalid</td>';
       } else {
         var socColor = r.soc < 30 ? 'color:#c00;font-weight:700;' : r.soc < 60 ? 'color:#7f6000;font-weight:700;' : 'color:#217346;font-weight:700;';
         cells += '<td style="' + TD_CTR + rowBg + socColor + '">' + fmt(r.soc, 0) + '%</td>';
@@ -331,7 +333,7 @@ geotab.addin.jacEvMonitor = function() {
 
       _rows.sort(function(a, b) { return a.vehicle.localeCompare(b.vehicle); });
 
-      var withSoc  = _rows.filter(function(r) { return r.soc !== null; });
+      var withSoc  = _rows.filter(function(r) { return r.soc !== null && r.soc <= 100; });
       var withTemp = _rows.filter(function(r) { return r.battTemp !== null; });
       var avgSoc   = withSoc.length  ? withSoc.reduce(function(s, r)  { return s + r.soc; }, 0)      / withSoc.length  : null;
       var avgTemp  = withTemp.length ? withTemp.reduce(function(s, r) { return s + r.battTemp; }, 0) / withTemp.length : null;
