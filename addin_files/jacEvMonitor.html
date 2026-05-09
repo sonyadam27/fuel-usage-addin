@@ -290,13 +290,13 @@ geotab.addin.jacEvMonitor = function() {
     });
   }
 
-  function getLatestStatus(deviceId, diagIds) {
+  // Fetch all StatusData for a device in the last 24h (no diagnostic filter — filter client-side)
+  function getLatestStatus(deviceId) {
     return apiCall('Get', {
       typeName: 'StatusData',
       search: {
         deviceSearch: { id: deviceId },
-        diagnosticSearch: diagIds.map(function(id) { return { id: id }; }),
-        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        fromDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       }
     });
   }
@@ -308,21 +308,14 @@ geotab.addin.jacEvMonitor = function() {
     });
   }
 
-  function getDeviceDetails(deviceId) {
-    return apiCall('Get', {
-      typeName: 'Device',
-      search: { id: deviceId }
-    });
-  }
-
+  // Fetch SoC history — single diagnostic search (scalar, not array)
   function getSocHistory(deviceId) {
-    const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     return apiCall('Get', {
       typeName: 'StatusData',
       search: {
         deviceSearch: { id: deviceId },
-        diagnosticSearch: [{ id: DIAG.soc }],
-        fromDate: from,
+        diagnosticSearch: { id: DIAG.soc },
+        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       }
     });
   }
