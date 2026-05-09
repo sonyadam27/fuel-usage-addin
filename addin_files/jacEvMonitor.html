@@ -5,637 +5,410 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JAC EV Monitor</title>
 <style>
-  @keyframes spin { to { transform: rotate(360deg); } }
-  * { box-sizing: border-box; }
-  body { font-family: Calibri, Arial, sans-serif; background: #f4f6f9; color: #222; margin: 0; padding: 0; }
-
-  #ev-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    color: #222;
-    border: 2px solid #1F4E79;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(31,78,121,0.3);
-    background: #fff;
-    overflow: hidden;
-  }
-
-  .ev-header {
-    background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%);
-    color: #fff;
-    padding: 22px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    border-bottom: 3px solid #163960;
-  }
-  .ev-header h1 {
-    margin: 0;
-    font-size: 30px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  }
-  .ev-header-right { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-
-  .device-select {
-    background: #fff;
-    border: 1px solid #bcd0e0;
-    color: #222;
-    padding: 7px 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    min-width: 200px;
-    cursor: pointer;
-  }
-
-  .refresh-btn {
-    padding: 8px 22px;
-    background: #1F4E79;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .refresh-btn:hover { background: #163960; }
-
-  .last-update {
-    font-size: 13px;
-    color: #666;
-    white-space: nowrap;
-  }
-
-  .filter-bar {
-    background: linear-gradient(180deg, #EBF3FB 0%, #D6E8F5 100%);
-    border-left: 4px solid #1F4E79;
-    border-bottom: 1px solid #B8CCE4;
-    padding: 14px 20px;
-    display: flex;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .ev-body { padding: 20px 28px; }
-
-  .status-bar {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 12px 16px;
-    background: #fff;
-    border: 1px solid #bcd0e0;
-    border-radius: 6px;
-    font-size: 13px;
-    color: #222;
-  }
-  .status-bar.show { display: flex; }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .status-dot.on  { background: #217346; }
-  .status-dot.off { background: #999; }
-  .status-label { font-weight: 600; }
-  .status-sep { color: #bcd0e0; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .card {
-    background: #fff;
-    border: 2px solid #1F4E79;
-    border-radius: 8px;
-    padding: 14px 18px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(31,78,121,0.12);
-  }
-  .card-label {
-    font-size: 11px;
-    color: #1F4E79;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .card-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: #1F4E79;
-    display: block;
-    line-height: 1.1;
-  }
-  .card-unit  { font-size: 13px; color: #666; font-weight: 400; }
-  .card-sub   { font-size: 12px; color: #999; margin-top: 4px; }
-
-  .soc-bar-wrap { margin-top: 8px; }
-  .soc-bar-bg { background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden; }
-  .soc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; background: linear-gradient(90deg, #1F4E79, #2E75B6); }
-
-  .badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 6px;
-  }
-  .badge.charging { background: #dbeafe; color: #1d4ed8; }
-  .badge.off   { background: #f1f5f9; color: #475569; }
-
-  .history-section {
-    background: #fff;
-    border: 2px solid #1F4E79;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 2px 8px rgba(31,78,121,0.12);
-  }
-  .history-section h2 {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1F4E79;
-    margin: 0 0 16px 0;
-  }
-
-  .chart-wrap { position: relative; height: 160px; }
-  canvas#socChart { width: 100% !important; height: 160px !important; }
-
-  .loading {
-    text-align: center;
-    padding: 48px 20px;
-    color: #666;
-    background: #fff;
-  }
-  .loading-spinner {
-    width: 44px;
-    height: 44px;
-    border: 4px solid #dce8f0;
-    border-top-color: #1F4E79;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 14px;
-  }
-
-  .error-msg {
-    display: none;
-    background: #fde8e8;
-    color: #a00;
-    border: 1px solid #f5b8b8;
-    border-radius: 4px;
-    padding: 12px 16px;
-    margin: 12px 0;
-    font-size: 14px;
-  }
-  .error-msg.show { display: block; }
+@keyframes jev-spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+<div id="jev-root" style="font-family:Calibri,Arial,sans-serif;max-width:1600px;margin:0 auto;color:#222;box-sizing:border-box;border:2px solid #1F4E79;border-radius:10px;box-shadow:0 4px 20px rgba(31,78,121,.3);background:#fff;overflow:hidden">
 
-<div id="ev-container">
-
-<div class="ev-header">
-  <div>
-    <h1>&#9889; JAC EV Monitor</h1>
-    <div style="font-size:14px;color:rgba(255,255,255,0.9);margin-top:4px;font-weight:600">Database: <strong id="dbName">—</strong></div>
-  </div>
-  <div class="ev-header-right">
-    <select class="device-select" id="deviceSelect">
-      <option value="">Loading devices...</option>
-    </select>
-    <button class="refresh-btn" id="refreshBtn" onclick="window._evMonitor && window._evMonitor.refresh()">&#8635; Refresh</button>
-    <span class="last-update" id="lastUpdate">—</span>
-  </div>
-</div>
-
-<div class="ev-body">
-  <div id="statusBar" class="status-bar">
-    <span class="status-dot off" id="ignDot"></span>
-    <span class="status-label" id="ignLabel">Ignition OFF</span>
-    <span class="status-sep">|</span>
-    <span id="chargeLabel">Not Charging</span>
-    <span class="status-sep">|</span>
-    <span id="driveLabel">—</span>
-    <span class="status-sep">|</span>
-    <span id="locationLabel">—</span>
+  <div style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
+    <div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">&#9889; JAC EV Monitor</h1>
+      <div style="font-size:14px;color:#fff;opacity:.9;margin-top:4px;font-weight:600">Database: <strong id="jev-dbname">&#8212;</strong></div>
+    </div>
+    <div id="jev-updated" style="font-size:12px;color:rgba(255,255,255,.8)"></div>
   </div>
 
-  <div id="loadingMsg" class="loading">
-    <div class="loading-spinner"></div>
-    <p>Loading EV data&hellip;</p>
-  </div>
-  <div id="errorMsg" class="error-msg"></div>
-
-  <div id="cardGrid" class="grid" style="display:none">
-
-    <div class="card" id="cardSoc">
-      <span class="card-label">&#128267; State of Charge</span>
-      <span class="card-value" id="valSoc">—</span>
-      <span class="card-unit">%</span>
-      <div class="soc-bar-wrap">
-        <div class="soc-bar-bg"><div class="soc-bar-fill" id="socBar" style="width:0%"></div></div>
-      </div>
-      <div class="card-sub" id="subSoc">—</div>
+  <div style="background:linear-gradient(180deg,#EBF3FB 0%,#D6E8F5 100%);border-left:4px solid #1F4E79;border-bottom:1px solid #B8CCE4;padding:14px 20px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Data Window</label>
+      <select id="jev-window" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+        <option value="24">Last 24 hours</option>
+        <option value="48">Last 48 hours</option>
+        <option value="72">Last 72 hours</option>
+      </select>
     </div>
-
-    <div class="card" id="cardTemp">
-      <span class="card-label">&#127777; Battery Temperature</span>
-      <span class="card-value" id="valTemp">—</span>
-      <span class="card-unit">°C</span>
-      <div class="card-sub" id="subTemp">—</div>
-    </div>
-
-    <div class="card" id="cardVolt">
-      <span class="card-label">&#128268; 12V System</span>
-      <span class="card-value" id="valVolt">—</span>
-      <span class="card-unit">V</span>
-      <div class="card-sub">GO device supply</div>
-    </div>
-
-    <div class="card" id="cardCharge">
-      <span class="card-label">&#9889; Charge State</span>
-      <span class="card-value" style="font-size:20px" id="valCharge">—</span>
-      <div id="badgeCharge"></div>
-    </div>
-
-    <div class="card" id="cardMotorA">
-      <span class="card-label">&#9881; Motor Channel A</span>
-      <span class="card-value" id="valMotorA">—</span>
-      <div class="card-sub">Live reading</div>
-    </div>
-
-    <div class="card" id="cardMotorB">
-      <span class="card-label">&#9881; Motor Channel B</span>
-      <span class="card-value" id="valMotorB">—</span>
-      <div class="card-sub">Live reading</div>
-    </div>
-
-    <div class="card" id="cardEcu">
-      <span class="card-label">&#128202; ECU Status</span>
-      <span class="card-value" style="font-size:22px" id="valEcu">—</span>
-      <div class="card-sub" id="subEcu">—</div>
-    </div>
-
-    <div class="card" id="cardOdo">
-      <span class="card-label">&#128650; Odometer</span>
-      <span class="card-value" style="font-size:24px" id="valOdo">—</span>
-      <span class="card-unit">km</span>
-      <div class="card-sub" id="subEngHrs">—</div>
-    </div>
-
+    <button id="jev-load" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">&#8635; Load / Refresh</button>
+    <button id="jev-export" disabled style="padding:8px 22px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;opacity:.5">&#8659; Export CSV</button>
   </div>
 
-  <div class="history-section" id="historySection" style="display:none">
-    <h2>&#128200; SoC History &mdash; Last 7 Days</h2>
-    <div class="chart-wrap">
-      <canvas id="socChart"></canvas>
+  <div id="jev-cards" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Total Devices</div>
+      <div id="jev-card-count" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;display:block">JAC EV vehicles</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Avg State of Charge</div>
+      <div id="jev-card-soc" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;display:block">battery %</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Ignition ON</div>
+      <div id="jev-card-ign" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;display:block">vehicles active</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Charging Now</div>
+      <div id="jev-card-chg" style="font-size:28px;font-weight:800;color:#217346;display:block;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;display:block">vehicles charging</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;display:block">Avg Batt Temp</div>
+      <div id="jev-card-temp" style="font-size:28px;font-weight:800;color:#1F4E79;display:block;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;display:block">°C</div>
     </div>
   </div>
-</div>
 
+  <div id="jev-loading" style="display:none;text-align:center;padding:48px 20px;color:#666;background:#fff">
+    <div style="width:44px;height:44px;border:4px solid #dce8f0;border-top-color:#1F4E79;border-radius:50%;animation:jev-spin .8s linear infinite;margin:0 auto 14px"></div>
+    <div>Loading JAC EV data&hellip;</div>
+    <div id="jev-progress" style="font-size:13px;color:#1F4E79;margin-top:6px"></div>
+  </div>
+
+  <div id="jev-error" style="display:none;background:#fde8e8;color:#a00;border:1px solid #f5b8b8;border-radius:4px;padding:12px 16px;margin:12px;font-size:14px"></div>
+
+  <div id="jev-table-wrap" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="jev-table" style="width:100%;border-collapse:collapse;font-size:14px;min-width:1100px">
+      <thead>
+        <tr>
+          <th colspan="3" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase;">Status</th>
+          <th colspan="4" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase;">Battery &amp; Power</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase;">Drive</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase;">Vehicle</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-left:2px solid #1F4E79;border-bottom:2px solid #163960;">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Serial</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Ignition</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Charge State</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">SoC (%)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Batt Temp (&#176;C)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">12V (V)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">ECU Status</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Motor A</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Motor B</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-bottom:2px solid #163960;">Odometer (km)</th>
+          <th style="background:#1F4E79;color:#fff;padding:11px 10px;text-align:center;font-size:14px;font-weight:700;white-space:nowrap;border:1px solid #2E75B6;border-right:2px solid #1F4E79;border-bottom:2px solid #163960;">Last Data (WIB)</th>
+        </tr>
+      </thead>
+      <tbody id="jev-tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="padding:8px 12px">
+    <div id="jev-count" style="font-size:13px;color:#666"></div>
+  </div>
 </div>
 
 <script>
 geotab.addin.jacEvMonitor = function() {
   'use strict';
 
-  const DIAG = {
-    soc:       'a4Cq3dWtCV0yoo9j_v__LbQ',
+  var DIAG = {
+    soc:         'a4Cq3dWtCV0yoo9j_v__LbQ',
     chargeState: 'aV90hCq8zakusGKE1UsfXrw',
-    ready:     'anjw6IIGoRU2ZHeUKGlekpg',
-    driveMode: 'aVVhkvxM34U6-4caL3hDQmg',
-    ecuStatus: 'aTWDkdT3qWEy_M_tENiZcdg',
-    battTemp:  'aFzVpeQqXskGNRmG8avPJ9Q',
-    motorA:    'ajfqpJjtowEy9j99LTeB2Gg',
-    motorB:    'aAjxil0OkYUO72Ydmz5AVog',
-    volt12:    'DiagnosticGoDeviceVoltageId',
-    ignition:  'DiagnosticIgnitionId',
+    ready:       'anjw6IIGoRU2ZHeUKGlekpg',
+    driveMode:   'aVVhkvxM34U6-4caL3hDQmg',
+    ecuStatus:   'aTWDkdT3qWEy_M_tENiZcdg',
+    battTemp:    'aFzVpeQqXskGNRmG8avPJ9Q',
+    motorA:      'ajfqpJjtowEy9j99LTeB2Gg',
+    motorB:      'aAjxil0OkYUO72Ydmz5AVog',
+    volt12:      'DiagnosticGoDeviceVoltageId',
+    ignition:    'DiagnosticIgnitionId'
   };
 
-  let _api, _devices = [], _selectedId = '', _refreshTimer = null, _chartCtx = null, _chartData = { labels: [], values: [] };
+  var _api, _rows = [], _refreshTimer = null;
+  var UTC7 = 7 * 3600000;
 
-  // ── helpers ──────────────────────────────────────────────────────
-  function el(id) { return document.getElementById(id); }
+  function $(id) { return document.getElementById(id); }
 
-  function fmt(val, decimals) {
-    if (val === null || val === undefined) return '—';
-    return Number(val).toFixed(decimals !== undefined ? decimals : 1);
-  }
-
-  function socClass(pct) {
-    if (pct >= 60) return 'high';
-    if (pct >= 30) return 'mid';
-    return 'low';
-  }
-
-  function toWIB(isoStr) {
-    if (!isoStr) return '—';
-    const d = new Date(isoStr);
-    return d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) + ' WIB';
-  }
-
-  // ── API wrappers ──────────────────────────────────────────────────
-  function apiCall(method, params) {
+  function callApi(method, params) {
     return new Promise(function(resolve, reject) {
       _api.call(method, params, resolve, reject);
     });
   }
 
-  // Fetch all StatusData for a device in the last 24h (no diagnostic filter — filter client-side)
-  function getLatestStatus(deviceId) {
-    return apiCall('Get', {
-      typeName: 'StatusData',
-      search: {
-        deviceSearch: { id: deviceId },
-        fromDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  function setProgress(msg) { $('jev-progress').textContent = msg; }
+
+  function toWIB(isoStr) {
+    if (!isoStr) return 'N/A';
+    try {
+      var d = new Date(new Date(isoStr).getTime() + UTC7);
+      return d.toISOString().replace('T', ' ').substring(0, 16);
+    } catch(e) { return 'N/A'; }
+  }
+
+  function fmt(val, dec) {
+    return (val === null || val === undefined) ? null : Number(val).toFixed(dec !== undefined ? dec : 1);
+  }
+
+  function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  function showLoading(show) {
+    $('jev-loading').style.display = show ? 'block' : 'none';
+    $('jev-load').disabled = show;
+    var exportDisabled = show || _rows.length === 0;
+    $('jev-export').disabled = exportDisabled;
+    $('jev-export').style.opacity = exportDisabled ? '.5' : '1';
+  }
+
+  function showError(msg) {
+    var el = $('jev-error');
+    if (msg) { el.textContent = msg; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  }
+
+  var TD      = 'padding:10px 11px;border-bottom:1px solid #c8d8e8;border-right:1px solid #dce8f0;white-space:nowrap;font-size:15px;vertical-align:middle;';
+  var TD_CTR  = TD + 'text-align:center;';
+  var TD_NA   = TD + 'text-align:center;color:#c00;font-weight:700;background:#fde8e8;';
+  var TD_MONO = TD + 'font-family:Consolas,monospace;font-size:13px;text-align:center;';
+
+  function renderTable() {
+    var tbody = $('jev-tbody');
+    tbody.innerHTML = '';
+    if (!_rows.length) {
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:32px;color:#666;font-size:15px">No JAC EV devices found.</td></tr>';
+      return;
+    }
+    _rows.forEach(function(r, i) {
+      var tr = document.createElement('tr');
+      var rowBg = i % 2 === 0 ? 'background:#fff;' : 'background:#deeaf1;';
+      var cells = '';
+
+      cells += '<td style="' + TD_CTR + rowBg + 'font-weight:700;color:#1F4E79;border-left:2px solid #1F4E79;">' + (i+1) + '</td>';
+      cells += '<td style="' + TD + rowBg + 'font-weight:600;">' + escHtml(r.vehicle) + '</td>';
+      cells += '<td style="' + TD + rowBg + 'font-family:Consolas,monospace;font-size:13px;">' + escHtml(r.serial) + '</td>';
+
+      var ignStyle = r.ignOn ? 'color:#217346;font-weight:700;' : 'color:#888;';
+      cells += '<td style="' + TD_CTR + rowBg + ignStyle + '">' + (r.ignOn ? '&#9679; ON' : '&#9675; OFF') + '</td>';
+
+      if (r.chargeState === null) {
+        cells += '<td style="' + TD_NA + '">N/A</td>';
+      } else {
+        var chgStyle = r.chargeState === 1 ? 'color:#1d4ed8;font-weight:700;' : 'color:#666;';
+        cells += '<td style="' + TD_CTR + rowBg + chgStyle + '">' + (r.chargeState === 1 ? '&#9889; Charging' : 'Not Charging') + '</td>';
       }
-    });
-  }
 
-  function getDeviceStatus(deviceId) {
-    return apiCall('Get', {
-      typeName: 'DeviceStatusInfo',
-      search: { deviceSearch: { id: deviceId } }
-    });
-  }
-
-  // Fetch SoC history — single diagnostic search (scalar, not array)
-  function getSocHistory(deviceId) {
-    return apiCall('Get', {
-      typeName: 'StatusData',
-      search: {
-        deviceSearch: { id: deviceId },
-        diagnosticSearch: { id: DIAG.soc },
-        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      if (r.soc === null) {
+        cells += '<td style="' + TD_NA + '">N/A</td>';
+      } else {
+        var socColor = r.soc < 30 ? 'color:#c00;font-weight:700;' : r.soc < 60 ? 'color:#7f6000;font-weight:700;' : 'color:#217346;font-weight:700;';
+        cells += '<td style="' + TD_CTR + rowBg + socColor + '">' + fmt(r.soc, 0) + '%</td>';
       }
+
+      if (r.battTemp === null) {
+        cells += '<td style="' + TD_NA + '">N/A</td>';
+      } else {
+        var tColor = r.battTemp > 55 ? 'color:#c00;font-weight:700;' : r.battTemp > 45 ? 'color:#7f6000;font-weight:700;' : '';
+        cells += '<td style="' + TD_CTR + rowBg + tColor + '">' + fmt(r.battTemp, 1) + '</td>';
+      }
+
+      cells += r.volt12 !== null
+        ? '<td style="' + TD_CTR + rowBg + '">' + fmt(r.volt12, 2) + ' V</td>'
+        : '<td style="' + TD_NA + '">N/A</td>';
+
+      if (r.ecuStatus === null) {
+        cells += '<td style="' + TD_NA + '">N/A</td>';
+      } else {
+        var ecuOk = r.ecuStatus === 136;
+        var ecuStyle = ecuOk ? 'color:#217346;font-weight:700;' : 'color:#c00;font-weight:700;';
+        cells += '<td style="' + TD_CTR + rowBg + ecuStyle + '">' + r.ecuStatus + (ecuOk ? ' (OK)' : ' (!)') + '</td>';
+      }
+
+      cells += r.motorA !== null
+        ? '<td style="' + TD_CTR + rowBg + '">' + fmt(r.motorA, 0) + '</td>'
+        : '<td style="' + TD_NA + '">N/A</td>';
+
+      cells += r.motorB !== null
+        ? '<td style="' + TD_CTR + rowBg + '">' + fmt(r.motorB, 0) + '</td>'
+        : '<td style="' + TD_NA + '">N/A</td>';
+
+      cells += r.odometer !== null
+        ? '<td style="' + TD_CTR + rowBg + '">' + r.odometer.toLocaleString() + '</td>'
+        : '<td style="' + TD_NA + '">N/A</td>';
+
+      cells += '<td style="' + TD_MONO + rowBg + 'border-right:2px solid #1F4E79;">' + toWIB(r.lastTs) + '</td>';
+
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
     });
   }
 
-  // ── populate devices ──────────────────────────────────────────────
-  function loadDevices() {
-    return apiCall('Get', {
+  function loadData() {
+    var winHrs = parseInt($('jev-window').value) || 24;
+    var fromDate = new Date(Date.now() - winHrs * 3600000).toISOString();
+
+    showError(null);
+    showLoading(true);
+    $('jev-table-wrap').style.display = 'none';
+    $('jev-cards').style.display = 'none';
+    _rows = [];
+
+    setProgress('Fetching JAC EV devices…');
+
+    callApi('Get', {
       typeName: 'Device',
       search: { groups: [{ id: 'GroupBatteryElectricVehicleId' }] }
     }).then(function(devices) {
-      _devices = devices.filter(function(d) {
+      var jacDevices = devices.filter(function(d) {
         return d.name && d.name.toLowerCase().indexOf('jac') !== -1;
       });
-      if (!_devices.length) {
-        _devices = devices;
+      if (!jacDevices.length) jacDevices = devices;
+
+      if (!jacDevices.length) {
+        showLoading(false);
+        showError('No BEV devices found in this database.');
+        return;
       }
-      const sel = el('deviceSelect');
-      sel.innerHTML = '';
-      _devices.forEach(function(d) {
-        const opt = document.createElement('option');
-        opt.value = d.id;
-        opt.textContent = d.name;
-        sel.appendChild(opt);
+
+      setProgress('Fetching EV data for ' + jacDevices.length + ' device(s)…');
+
+      var dataPromises = jacDevices.map(function(d) {
+        return Promise.all([
+          callApi('Get', {
+            typeName: 'StatusData',
+            search: { deviceSearch: { id: d.id }, fromDate: fromDate }
+          }),
+          callApi('Get', {
+            typeName: 'DeviceStatusInfo',
+            search: { deviceSearch: { id: d.id } }
+          })
+        ]).then(function(res) {
+          return { device: d, status: res[0], info: res[1] };
+        });
       });
-      if (_devices.length > 0) {
-        _selectedId = _devices[0].id;
-        sel.value = _selectedId;
-      }
-    });
-  }
 
-  // ── render cards ──────────────────────────────────────────────────
-  function renderData(statusRecords, deviceInfo) {
-    // Group records: keep latest per diagnostic
-    const latest = {};
-    statusRecords.forEach(function(r) {
-      const id = r.diagnostic.id;
-      if (!latest[id] || r.dateTime > latest[id].dateTime) {
-        latest[id] = r;
-      }
-    });
+      return Promise.all(dataPromises);
+    }).then(function(allData) {
+      if (!allData) return;
 
-    function val(key) { return latest[DIAG[key]] ? latest[DIAG[key]].data : null; }
-    function ts(key)  { return latest[DIAG[key]] ? latest[DIAG[key]].dateTime : null; }
+      _rows = allData.map(function(item) {
+        var d = item.device;
+        var latest = {};
+        item.status.forEach(function(r) {
+          var id = r.diagnostic.id;
+          if (!latest[id] || r.dateTime > latest[id].dateTime) latest[id] = r;
+        });
 
-    // SoC
-    const soc = val('soc');
-    if (soc !== null) {
-      const pct = Math.min(100, Math.max(0, soc));
-      el('valSoc').textContent = fmt(soc, 0);
-      el('socBar').style.width = pct + '%';
-      el('subSoc').textContent = 'Updated ' + toWIB(ts('soc'));
-    }
+        function val(key) { return latest[DIAG[key]] ? latest[DIAG[key]].data : null; }
 
-    // Battery Temp
-    const temp = val('battTemp');
-    if (temp !== null) {
-      el('valTemp').textContent = fmt(temp, 1);
-      let tempStatus = 'Normal';
-      if (temp > 45) tempStatus = 'Warm';
-      if (temp > 55) tempStatus = 'High — monitor';
-      el('subTemp').textContent = tempStatus + ' · ' + toWIB(ts('battTemp'));
-    }
+        var ign = val('ignition');
+        var ready = val('ready');
+        var ignOn = ign === 1 || ready === 1;
 
-    // 12V
-    const v12 = val('volt12');
-    if (v12 !== null) {
-      el('valVolt').textContent = fmt(v12, 2);
-    }
+        var lastTs = null;
+        item.status.forEach(function(r) {
+          if (!lastTs || r.dateTime > lastTs) lastTs = r.dateTime;
+        });
 
-    // Charge State
-    const chg = val('chargeState');
-    if (chg !== null) {
-      const isCharging = chg === 1;
-      el('valCharge').textContent = isCharging ? 'Charging' : 'Not Charging';
-      el('badgeCharge').innerHTML = isCharging
-        ? '<span class="badge charging"><span class="badge-dot">⚡</span> Active</span>'
-        : '<span class="badge off"><span>○</span> Inactive</span>';
-    }
+        var odometer = null;
+        if (item.info && item.info.length > 0 && item.info[0].odometer !== undefined) {
+          odometer = Math.round(item.info[0].odometer / 1000);
+        }
 
-    // Motor channels
-    const mA = val('motorA');
-    if (mA !== null) el('valMotorA').textContent = fmt(mA, 0);
-    const mB = val('motorB');
-    if (mB !== null) el('valMotorB').textContent = fmt(mB, 0);
+        return {
+          vehicle:     d.name || d.serialNumber || d.id,
+          serial:      d.serialNumber || d.id,
+          ignOn:       ignOn,
+          chargeState: val('chargeState'),
+          soc:         val('soc'),
+          battTemp:    val('battTemp'),
+          volt12:      val('volt12'),
+          ecuStatus:   val('ecuStatus'),
+          motorA:      val('motorA'),
+          motorB:      val('motorB'),
+          odometer:    odometer,
+          lastTs:      lastTs
+        };
+      });
 
-    // ECU Status
-    const ecu = val('ecuStatus');
-    if (ecu !== null) {
-      el('valEcu').textContent = ecu;
-      el('subEcu').textContent = ecu === 136 ? 'Normal (0x88)' : 'Code: 0x' + ecu.toString(16).toUpperCase();
-    }
+      _rows.sort(function(a, b) { return a.vehicle.localeCompare(b.vehicle); });
 
-    // Ignition & status bar
-    const ign = val('ignition');
-    const ready = val('ready');
-    const drive = val('driveMode');
-    const ignOn = ign === 1 || ready === 1;
-    const dot = el('ignDot');
-    dot.className = 'status-dot ' + (ignOn ? 'on' : 'off');
-    el('ignLabel').textContent = ignOn ? 'Ignition ON' : 'Ignition OFF';
-    el('chargeLabel').textContent = chg === 1 ? '⚡ Charging' : 'Not Charging';
-    el('driveLabel').textContent = drive !== null ? 'Drive Mode: ' + drive : '—';
+      var withSoc  = _rows.filter(function(r) { return r.soc !== null; });
+      var withTemp = _rows.filter(function(r) { return r.battTemp !== null; });
+      var avgSoc   = withSoc.length  ? withSoc.reduce(function(s, r)  { return s + r.soc; }, 0)      / withSoc.length  : null;
+      var avgTemp  = withTemp.length ? withTemp.reduce(function(s, r) { return s + r.battTemp; }, 0) / withTemp.length : null;
+      var ignCount = _rows.filter(function(r) { return r.ignOn; }).length;
+      var chgCount = _rows.filter(function(r) { return r.chargeState === 1; }).length;
 
-    // Device info (location, odometer)
-    if (deviceInfo && deviceInfo.length > 0) {
-      const info = deviceInfo[0];
-      const loc = info.latitude !== undefined
-        ? info.latitude.toFixed(4) + '°, ' + info.longitude.toFixed(4) + '°'
-        : 'Unknown';
-      el('locationLabel').textContent = '📍 ' + loc;
-      const odo = info.odometer !== undefined ? Math.round(info.odometer / 1000) : null;
-      if (odo) el('valOdo').textContent = odo.toLocaleString();
-    }
+      $('jev-card-count').textContent = _rows.length;
+      $('jev-card-soc').textContent   = avgSoc  !== null ? avgSoc.toFixed(0)  + '%' : '—';
+      $('jev-card-ign').textContent   = ignCount;
+      $('jev-card-chg').textContent   = chgCount;
+      $('jev-card-temp').textContent  = avgTemp !== null ? avgTemp.toFixed(1) + ' °C' : '—';
+      $('jev-cards').style.display    = 'flex';
 
-    el('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-  }
+      $('jev-updated').textContent = 'Updated: ' + toWIB(new Date().toISOString()) + ' WIB';
+      $('jev-count').textContent   = _rows.length + ' JAC EV vehicle(s) | Data window: last ' + (parseInt($('jev-window').value) || 24) + 'h';
 
-  // ── SoC history chart ─────────────────────────────────────────────
-  function drawChart(records) {
-    const canvas = el('socChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth, H = 160;
-    canvas.width = W; canvas.height = H;
-
-    const pts = records
-      .filter(function(r) { return r.diagnostic.id === DIAG.soc; })
-      .sort(function(a, b) { return a.dateTime < b.dateTime ? -1 : 1; });
-
-    if (pts.length < 2) {
-      ctx.fillStyle = '#999';
-      ctx.font = '13px Calibri,Arial,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Not enough history data', W / 2, H / 2);
-      return;
-    }
-
-    const values = pts.map(function(p) { return Math.min(100, p.data); });
-    const minV = 0, maxV = 100;
-    const pad = { top: 16, right: 16, bottom: 28, left: 36 };
-    const cW = W - pad.left - pad.right;
-    const cH = H - pad.top - pad.bottom;
-
-    // Grid lines
-    ctx.strokeStyle = '#d6e8f5'; ctx.lineWidth = 1;
-    [0, 25, 50, 75, 100].forEach(function(v) {
-      const y = pad.top + cH - (v / maxV) * cH;
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
-      ctx.fillStyle = '#999'; ctx.font = '10px Calibri,Arial,sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(v + '%', pad.left - 4, y + 3);
-    });
-
-    // Gradient fill
-    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-    grad.addColorStop(0, 'rgba(31,78,121,0.2)');
-    grad.addColorStop(1, 'rgba(31,78,121,0)');
-
-    ctx.beginPath();
-    pts.forEach(function(p, i) {
-      const x = pad.left + (i / (pts.length - 1)) * cW;
-      const y = pad.top + cH - ((Math.min(100, p.data) - minV) / (maxV - minV)) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.lineTo(pad.left + cW, pad.top + cH);
-    ctx.lineTo(pad.left, pad.top + cH);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.strokeStyle = '#2E75B6'; ctx.lineWidth = 2;
-    pts.forEach(function(p, i) {
-      const x = pad.left + (i / (pts.length - 1)) * cW;
-      const y = pad.top + cH - ((Math.min(100, p.data) - minV) / (maxV - minV)) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    // Date labels
-    const days = [0, Math.floor(pts.length / 2), pts.length - 1];
-    days.forEach(function(i) {
-      const x = pad.left + (i / (pts.length - 1)) * cW;
-      const d = new Date(pts[i].dateTime);
-      const label = (d.getMonth() + 1) + '/' + d.getDate();
-      ctx.fillStyle = '#999'; ctx.font = '10px Calibri,Arial,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(label, x, H - 8);
-    });
-  }
-
-  // ── main fetch & render ───────────────────────────────────────────
-  function fetchAndRender() {
-    if (!_selectedId) return;
-    el('loadingMsg').style.display = 'block';
-    el('errorMsg').className = 'error-msg';
-    el('cardGrid').style.display = 'none';
-    el('statusBar').className = 'status-bar';
-    el('historySection').style.display = 'none';
-
-    Promise.all([
-      getLatestStatus(_selectedId),
-      getDeviceStatus(_selectedId),
-      getSocHistory(_selectedId)
-    ]).then(function(results) {
-      el('loadingMsg').style.display = 'none';
-      const statusRecords = results[0];
-      const deviceInfo    = results[1];
-      const socHistory    = results[2];
-
-      el('cardGrid').style.display = 'grid';
-      el('statusBar').className = 'status-bar show';
-      el('historySection').style.display = 'block';
-
-      renderData(statusRecords, deviceInfo);
-      drawChart(socHistory);
+      renderTable();
+      $('jev-table-wrap').style.display = 'block';
+      showLoading(false);
     }).catch(function(err) {
-      el('loadingMsg').style.display = 'none';
-      el('errorMsg').textContent = 'Error loading data: ' + (err.message || JSON.stringify(err));
-      el('errorMsg').className = 'error-msg show';
+      showError('Error loading EV data: ' + (err.message || JSON.stringify(err)));
+      showLoading(false);
     });
   }
 
-  // ── auto-refresh ──────────────────────────────────────────────────
+  function exportCsv() {
+    if (!_rows.length) return;
+    var headers = ['#','Vehicle','Serial','Ignition','Charge State','SoC (%)','Batt Temp (C)','12V (V)','ECU Status','Motor A','Motor B','Odometer (km)','Last Data (WIB)'];
+    var lines = [headers.map(function(h) { return '"' + h + '"'; }).join(',')];
+    _rows.forEach(function(r, i) {
+      var row = [
+        i + 1,
+        '"' + (r.vehicle || '').replace(/"/g, '""') + '"',
+        '"' + (r.serial  || '').replace(/"/g, '""') + '"',
+        r.ignOn ? 'ON' : 'OFF',
+        r.chargeState === 1 ? 'Charging' : r.chargeState !== null ? 'Not Charging' : '',
+        r.soc      !== null ? fmt(r.soc, 0) : '',
+        r.battTemp !== null ? fmt(r.battTemp, 1) : '',
+        r.volt12   !== null ? fmt(r.volt12, 2) : '',
+        r.ecuStatus !== null ? r.ecuStatus : '',
+        r.motorA   !== null ? fmt(r.motorA, 0) : '',
+        r.motorB   !== null ? fmt(r.motorB, 0) : '',
+        r.odometer !== null ? r.odometer : '',
+        '"' + toWIB(r.lastTs) + '"'
+      ];
+      lines.push(row.join(','));
+    });
+    var csv  = '﻿' + lines.join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    var m    = window.location.pathname.match(/\/([^/]+)\//);
+    a.download = 'jac_ev_monitor_' + (m ? m[1] : 'export') + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function startRefresh() {
     if (_refreshTimer) clearInterval(_refreshTimer);
-    _refreshTimer = setInterval(fetchAndRender, 30000);
+    _refreshTimer = setInterval(loadData, 60000);
   }
-
-  // ── public interface ──────────────────────────────────────────────
-  const monitor = {
-    refresh: function() { fetchAndRender(); },
-  };
-  window._evMonitor = monitor;
 
   return {
     initialize: function(api, state, callback) {
       _api = api;
-      var dbMatch = window.location.pathname.match(/\/([^\/]+)\//);
-      var dbName = dbMatch ? dbMatch[1] : 'Unknown';
-      el('dbName').textContent = dbName;
-
-      loadDevices().then(function() {
-        el('deviceSelect').addEventListener('change', function(e) {
-          _selectedId = e.target.value;
-          fetchAndRender();
-        });
-        callback();
-      }).catch(function(err) {
-        el('loadingMsg').style.display = 'none';
-        el('errorMsg').textContent = 'Failed to load devices: ' + (err.message || JSON.stringify(err));
-        el('errorMsg').className = 'error-msg show';
-        callback();
-      });
+      var m = window.location.pathname.match(/\/([^/]+)\//);
+      $('jev-dbname').textContent = m ? m[1] : 'Unknown';
+      $('jev-load').addEventListener('click', loadData);
+      $('jev-export').addEventListener('click', exportCsv);
+      callback();
     },
-
     focus: function(api, state) {
       _api = api;
-      fetchAndRender();
+      loadData();
       startRefresh();
     },
-
     blur: function() {
       if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
     }
