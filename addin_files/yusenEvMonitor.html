@@ -23,7 +23,10 @@
   <!-- Tab Bar -->
   <div style="background:#163960;display:flex;gap:0;border-bottom:2px solid #1F4E79">
     <button id="yev-tab-live" onclick="yevTab('live')" style="padding:10px 24px;background:#2E75B6;color:#fff;border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9679; Live Status</button>
+    <button id="yev-tab-energy" onclick="yevTab('energy')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9889; Energy In/Out</button>
+    <button id="yev-tab-trips" onclick="yevTab('trips')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#128661; Trip Energy</button>
     <button id="yev-tab-charge" onclick="yevTab('charge')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9875; Charge Sessions</button>
+    <button id="yev-tab-daily" onclick="yevTab('daily')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#128197; Daily Economy</button>
   </div>
 
   <!-- Controls -->
@@ -69,6 +72,40 @@
       <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Battery Power</div>
       <div id="yev-card-pwr" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
       <div style="font-size:11px;color:#888;margin-top:4px">kW</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Efficiency</div>
+      <div id="yev-card-eff" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km/kWh</div>
+    </div>
+  </div>
+
+  <!-- Energy In/Out Cards -->
+  <div id="yev-cards-energy" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Energy In</div>
+      <div id="yev-en-card-in" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh (fleet)</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Energy In — Driving</div>
+      <div id="yev-en-card-in-drive" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh (fleet)</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Energy In — Idling</div>
+      <div id="yev-en-card-in-idle" style="font-size:28px;font-weight:800;color:#c07000;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh (fleet)</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Energy Out</div>
+      <div id="yev-en-card-out" style="font-size:28px;font-weight:800;color:#2E75B6;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh regen (fleet)</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Net Energy Used</div>
+      <div id="yev-en-card-net" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh (In − Out)</div>
     </div>
   </div>
 
@@ -117,7 +154,9 @@
           <th colspan="3" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
           <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Status</th>
           <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Battery</th>
-          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Range</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Range</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Energy Efficiency</th>
+          <th style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;"></th>
         </tr>
         <tr>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
@@ -128,10 +167,142 @@
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">SoC (%)</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Battery Power (kW)</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Range Est. (km)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Energy Used (kWh)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Efficiency (km/kWh)</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Last Data (WIB)</th>
         </tr>
       </thead>
       <tbody id="yev-tbody-live"></tbody>
+    </table>
+  </div>
+
+  <!-- Energy In/Out Table -->
+  <div id="yev-table-energy" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="yev-tbl-energy" style="width:100%;border-collapse:collapse;font-size:14px;min-width:900px">
+      <thead>
+        <tr>
+          <th colspan="2" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="3" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Energy In (kWh)</th>
+          <th colspan="3" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Energy Out / Regen (kWh)</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Net &amp; Efficiency</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Total In</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">While Driving</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">While Idling</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Total Out</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">While Driving</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">While Idling</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Net (In&#8722;Out)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Efficiency (km/kWh)</th>
+        </tr>
+      </thead>
+      <tbody id="yev-tbody-energy"></tbody>
+    </table>
+  </div>
+
+  <!-- Trip Energy Cards -->
+  <div id="yev-cards-trips" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Trips</div>
+      <div id="yev-tr-card-count" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">in window</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Distance</div>
+      <div id="yev-tr-card-dist" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Energy Used</div>
+      <div id="yev-tr-card-kwh" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Efficiency</div>
+      <div id="yev-tr-card-eff" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km/kWh</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg kWh / Trip</div>
+      <div id="yev-tr-card-avg" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh</div>
+    </div>
+  </div>
+
+  <!-- Trip Energy Table -->
+  <div id="yev-table-trips" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="yev-tbl-trips" style="width:100%;border-collapse:collapse;font-size:14px;min-width:1000px">
+      <thead>
+        <tr>
+          <th colspan="2" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="3" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Trip</th>
+          <th colspan="3" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Energy</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Start (WIB)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Duration</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Distance (km)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Energy Used (kWh)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Regen (kWh)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Efficiency (km/kWh)</th>
+        </tr>
+      </thead>
+      <tbody id="yev-tbody-trips"></tbody>
+    </table>
+  </div>
+
+  <!-- Daily Economy Cards -->
+  <div id="yev-cards-daily" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Vehicle-Days</div>
+      <div id="yev-dy-card-count" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">records</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Fleet Total Distance</div>
+      <div id="yev-dy-card-dist" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Fleet Total Energy</div>
+      <div id="yev-dy-card-kwh" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh used</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Economy</div>
+      <div id="yev-dy-card-eff" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km/kWh</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Best Day</div>
+      <div id="yev-dy-card-best" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">km/kWh</div>
+    </div>
+  </div>
+
+  <!-- Daily Economy Table -->
+  <div id="yev-table-daily" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="yev-tbl-daily" style="width:100%;border-collapse:collapse;font-size:14px;min-width:800px">
+      <thead>
+        <tr>
+          <th colspan="2" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="4" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Electric Energy Economy</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Date</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Economy (km/kWh)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Distance (km)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Energy Used (kWh)</th>
+        </tr>
+      </thead>
+      <tbody id="yev-tbody-daily"></tbody>
     </table>
   </div>
 
@@ -173,13 +344,18 @@ geotab.addin.yusenEvMonitor = function() {
     chrgState:  'DiagnosticElectricVehicleChargingStateId',
     battPower:  'DiagnosticElectricVehicleBatteryPowerId',
     rangeEst:   'DiagnosticElectricVehicleRangeId',
-    ignition:   'DiagnosticIgnitionId'
+    ignition:        'DiagnosticIgnitionId',
+    energyIn:        'DiagnosticElectricEnergyInId',
+    energyOut:       'DiagnosticElectricEnergyOutId',
+    energyInIdle:    'DiagnosticTotalLifetimeEnergyInWhileIdlingId',
+    energyOutIdle:   'DiagnosticTotalLifetimeEnergyOutWhileIdlingId',
+    odometer:        'DiagnosticOdometerAdjustmentId'
   };
 
   // Charging state values from Geotab SDK
   var CHARGE_LABELS = { 0: 'Not Charging', 1: 'Charging', 2: 'Fully Charged', 3: 'Fault' };
 
-  var _api, _state, _liveRows = [], _chargeRows = [], _timer = null, _activeTab = 'live';
+  var _api, _state, _liveRows = [], _chargeRows = [], _tripRows = [], _dailyRows = [], _timer = null, _activeTab = 'live';
   var _devMap = {};
 
   var TD_CTR  = 'padding:7px 8px;text-align:center;border:1px solid #dbe8f2;';
@@ -238,36 +414,50 @@ geotab.addin.yusenEvMonitor = function() {
   // ── Tab switching ────────────────────────────────────────────────────────────
   window.yevTab = function(tab) {
     _activeTab = tab;
-    var liveBg   = tab === 'live'   ? '#2E75B6' : 'transparent';
-    var chargeBg = tab === 'charge' ? '#2E75B6' : 'transparent';
-    var liveCol   = tab === 'live'   ? '#fff' : 'rgba(255,255,255,.7)';
-    var chargeCol = tab === 'charge' ? '#fff' : 'rgba(255,255,255,.7)';
-    var tl = document.getElementById('yev-tab-live');
-    var tc = document.getElementById('yev-tab-charge');
-    if (tl) { tl.style.background = liveBg; tl.style.color = liveCol; }
-    if (tc) { tc.style.background = chargeBg; tc.style.color = chargeCol; }
+    var tabs = { live: 'yev-tab-live', energy: 'yev-tab-energy', trips: 'yev-tab-trips', charge: 'yev-tab-charge', daily: 'yev-tab-daily' };
+    Object.keys(tabs).forEach(function(k) {
+      var el = document.getElementById(tabs[k]);
+      if (el) {
+        el.style.background = (k === tab) ? '#2E75B6' : 'transparent';
+        el.style.color = (k === tab) ? '#fff' : 'rgba(255,255,255,.7)';
+      }
+    });
 
-    // Cards
-    hide('yev-cards-live'); hide('yev-cards-charge');
-    hide('yev-table-live'); hide('yev-table-charge');
+    hide('yev-cards-live'); hide('yev-cards-energy'); hide('yev-cards-trips'); hide('yev-cards-charge'); hide('yev-cards-daily');
+    hide('yev-table-live'); hide('yev-table-energy'); hide('yev-table-trips'); hide('yev-table-charge'); hide('yev-table-daily');
 
     if (tab === 'live' && _liveRows.length) {
       show('yev-cards-live', true);
       show('yev-table-live');
     }
+    if (tab === 'energy' && _liveRows.length) {
+      show('yev-cards-energy', true);
+      show('yev-table-energy');
+    }
+    if (tab === 'trips' && _tripRows.length) {
+      show('yev-cards-trips', true);
+      show('yev-table-trips');
+    }
     if (tab === 'charge' && _chargeRows.length) {
       show('yev-cards-charge', true);
       show('yev-table-charge');
     }
+    if (tab === 'daily' && _dailyRows.length) {
+      show('yev-cards-daily', true);
+      show('yev-table-daily');
+    }
 
-    // Window selector: hide for charge (use fixed range from control)
+    // Window selector: hide for charge (uses fixed 30-day range)
     var wctrl = document.getElementById('yev-ctrl-window');
-    if (wctrl) wctrl.style.display = tab === 'live' ? 'flex' : 'none';
+    if (wctrl) wctrl.style.display = tab === 'charge' ? 'none' : 'flex';
 
     // Enable export if data ready
     var btn = document.getElementById('yev-export');
     if (btn) {
-      var hasData = (tab === 'live' && _liveRows.length) || (tab === 'charge' && _chargeRows.length);
+      var hasData = (tab === 'charge' && _chargeRows.length) ||
+                    (tab === 'trips'  && _tripRows.length)   ||
+                    (tab === 'daily'  && _dailyRows.length)  ||
+                    (_liveRows.length && (tab === 'live' || tab === 'energy'));
       btn.disabled = !hasData;
       btn.style.opacity = hasData ? '1' : '.5';
     }
@@ -275,8 +465,8 @@ geotab.addin.yusenEvMonitor = function() {
 
   // ── Load ─────────────────────────────────────────────────────────────────────
   function load() {
-    hide('yev-cards-live'); hide('yev-cards-charge');
-    hide('yev-table-live'); hide('yev-table-charge');
+    hide('yev-cards-live'); hide('yev-cards-energy'); hide('yev-cards-trips'); hide('yev-cards-charge'); hide('yev-cards-daily');
+    hide('yev-table-live'); hide('yev-table-energy'); hide('yev-table-trips'); hide('yev-table-charge'); hide('yev-table-daily');
     hide('yev-error');
     show('yev-loading');
 
@@ -311,10 +501,21 @@ geotab.addin.yusenEvMonitor = function() {
       devices.forEach(function(d) { _devMap[d.id] = d; });
       var deviceIds = devices.map(function(d) { return d.id; });
 
-      // Build multicall: StatusData per device + ChargeEvent per device
+      // Build multicall: StatusData per device + Trip per device + ChargeEvent per device
       var statusCalls = deviceIds.map(function(devId) {
         return ['Get', {
           typeName: 'StatusData',
+          search: {
+            fromDate: fromIso,
+            toDate: toIso,
+            deviceSearch: { id: devId }
+          }
+        }];
+      });
+
+      var tripCalls = deviceIds.map(function(devId) {
+        return ['Get', {
+          typeName: 'Trip',
           search: {
             fromDate: fromIso,
             toDate: toIso,
@@ -334,10 +535,11 @@ geotab.addin.yusenEvMonitor = function() {
         }];
       });
 
-      _api.multiCall(statusCalls.concat(chargeCalls), function(allResults) {
+      _api.multiCall(statusCalls.concat(tripCalls).concat(chargeCalls), function(allResults) {
         var n = deviceIds.length;
         var statusResults = allResults.slice(0, n);
-        var chargeResults = allResults.slice(n);
+        var tripResults   = allResults.slice(n, n * 2);
+        var chargeResults = allResults.slice(n * 2);
 
         // ── Build live rows ──────────────────────────────────────────────────
         _liveRows = [];
@@ -358,20 +560,64 @@ geotab.addin.yusenEvMonitor = function() {
           var pwrRec   = latest(DIAG.battPower);
           var rngRec   = latest(DIAG.rangeEst);
 
+          // Energy & efficiency: delta (last − first) of cumulative counters in the window
+          function firstAndLast(diagId) {
+            var filtered = recs.filter(function(r) { return r.diagnostic && r.diagnostic.id === diagId; });
+            if (!filtered.length) return { first: null, last: null };
+            filtered.sort(function(a, b) { return new Date(a.dateTime) - new Date(b.dateTime); });
+            return { first: filtered[0], last: filtered[filtered.length - 1] };
+          }
+          function deltaKwh(span) {
+            if (!span.first || !span.last || span.first === span.last) return null;
+            var d = (span.last.data - span.first.data) / 1000; // Wh → kWh
+            return d >= 0 ? d : null;
+          }
+
+          var odomSpan      = firstAndLast(DIAG.odometer);
+          var einSpan       = firstAndLast(DIAG.energyIn);
+          var eoutSpan      = firstAndLast(DIAG.energyOut);
+          var einIdleSpan   = firstAndLast(DIAG.energyInIdle);
+          var eoutIdleSpan  = firstAndLast(DIAG.energyOutIdle);
+
+          var distKm         = null;
+          var energyInKwh    = deltaKwh(einSpan);      // total energy in (driving + idle)
+          var energyOutKwh   = deltaKwh(eoutSpan);     // total energy out (driving + idle)
+          var einIdleKwh     = deltaKwh(einIdleSpan);  // energy in while idling
+          var eoutIdleKwh    = deltaKwh(eoutIdleSpan); // energy out while idling
+
+          // Derived: driving = total − idling
+          var energyInDriveKwh  = (energyInKwh  !== null && einIdleKwh  !== null) ? Math.max(0, energyInKwh  - einIdleKwh)  : energyInKwh;
+          var energyOutDriveKwh = (energyOutKwh !== null && eoutIdleKwh !== null) ? Math.max(0, energyOutKwh - eoutIdleKwh) : energyOutKwh;
+
+          var effKmPerKwh = null;
+          if (odomSpan.first && odomSpan.last && odomSpan.first !== odomSpan.last) {
+            distKm = (odomSpan.last.data - odomSpan.first.data) / 1000;
+          }
+          if (distKm !== null && energyInKwh !== null && energyInKwh > 0) {
+            effKmPerKwh = distKm / energyInKwh;
+          }
+
           var lastRec = recs.reduce(function(a, b) {
             return (!a || new Date(b.dateTime) > new Date(a.dateTime)) ? b : a;
           }, null);
 
           _liveRows.push({
-            id:       dev.id,
-            name:     dev.name,
-            serial:   dev.serialNumber || '—',
-            ignition: ignRec  ? ignRec.data  : null,
-            soc:      socRec  ? socRec.data  : null,
-            chrgSt:   chrgRec ? chrgRec.data : null,
-            battPwr:  pwrRec  ? pwrRec.data  : null,
-            range:    rngRec  ? rngRec.data  : null,
-            lastDate: lastRec ? lastRec.dateTime : null
+            id:               dev.id,
+            name:             dev.name,
+            serial:           dev.serialNumber || '—',
+            ignition:         ignRec  ? ignRec.data  : null,
+            soc:              socRec  ? socRec.data  : null,
+            chrgSt:           chrgRec ? chrgRec.data : null,
+            battPwr:          pwrRec  ? pwrRec.data  : null,
+            range:            rngRec  ? rngRec.data  : null,
+            energyInKwh:      energyInKwh,
+            energyOutKwh:     energyOutKwh,
+            einIdleKwh:       einIdleKwh,
+            eoutIdleKwh:      eoutIdleKwh,
+            energyInDriveKwh: energyInDriveKwh,
+            energyOutDriveKwh:energyOutDriveKwh,
+            effKmPerKwh:      effKmPerKwh,
+            lastDate:         lastRec ? lastRec.dateTime : null
           });
         });
         _liveRows.sort(function(a, b) { return a.name.localeCompare(b.name); });
@@ -381,12 +627,15 @@ geotab.addin.yusenEvMonitor = function() {
         devices.forEach(function(dev, di) {
           var events = chargeResults[di] || [];
           events.forEach(function(ev) {
+            // ChargeEvent SoC is returned as a fraction 0–1; convert to percentage
+            var rawStart = ev.startStateOfCharge != null ? ev.startStateOfCharge : null;
+            var rawEnd   = ev.endStateOfCharge   != null ? ev.endStateOfCharge   : null;
             _chargeRows.push({
               devName:    dev.name,
               startTime:  ev.startTime,
               duration:   ev.duration,
-              startSoc:   ev.startStateOfCharge != null ? ev.startStateOfCharge * 100 : null,
-              endSoc:     ev.endStateOfCharge   != null ? ev.endStateOfCharge * 100   : null,
+              startSoc:   rawStart !== null ? rawStart * 100 : null,
+              endSoc:     rawEnd   !== null ? rawEnd   * 100 : null,
               energyKwh:  ev.energyConsumedKwh,
               chargeType: ev.chargeType || '—',
               isEst:      ev.chargeIsEstimated
@@ -395,17 +644,123 @@ geotab.addin.yusenEvMonitor = function() {
         });
         _chargeRows.sort(function(a, b) { return new Date(b.startTime) - new Date(a.startTime); });
 
+        // ── Build trip rows ──────────────────────────────────────────────────
+        _tripRows = [];
+        devices.forEach(function(dev, di) {
+          var recs    = statusResults[di] || [];
+          var trips   = tripResults[di]   || [];
+
+          // Build sorted energyIn and energyOut timelines for this device
+          function timeline(diagId) {
+            return recs
+              .filter(function(r) { return r.diagnostic && r.diagnostic.id === diagId; })
+              .sort(function(a, b) { return new Date(a.dateTime) - new Date(b.dateTime); });
+          }
+          var einTl  = timeline(DIAG.energyIn);
+          var eoutTl = timeline(DIAG.energyOut);
+
+          // Find closest record in a timeline to a given timestamp (within 30 min)
+          function nearest(tl, isoTime) {
+            if (!tl.length) return null;
+            var t = new Date(isoTime).getTime();
+            var best = null, bestDiff = Infinity;
+            for (var k = 0; k < tl.length; k++) {
+              var diff = Math.abs(new Date(tl[k].dateTime).getTime() - t);
+              if (diff < bestDiff) { bestDiff = diff; best = tl[k]; }
+            }
+            return bestDiff <= 1800000 ? best : null; // within 30 min
+          }
+
+          trips.forEach(function(tr) {
+            var distKm = tr.distance != null ? tr.distance / 1000 : null;
+            var durSec = tr.drivingDuration != null
+              ? (function() {
+                  var m = String(tr.drivingDuration).match(/(\d+):(\d+):(\d+)/);
+                  return m ? parseInt(m[1])*3600 + parseInt(m[2])*60 + parseInt(m[3]) : null;
+                })()
+              : null;
+
+            var einStart  = nearest(einTl,  tr.startTime);
+            var einStop   = nearest(einTl,  tr.stopTime);
+            var eoutStart = nearest(eoutTl, tr.startTime);
+            var eoutStop  = nearest(eoutTl, tr.stopTime);
+
+            var energyKwh = (einStart && einStop && einStop.id !== einStart.id)
+              ? Math.max(0, (einStop.data - einStart.data) / 1000) : null;
+            var regenKwh  = (eoutStart && eoutStop && eoutStop.id !== eoutStart.id)
+              ? Math.max(0, (eoutStop.data - eoutStart.data) / 1000) : null;
+            var eff = (distKm !== null && energyKwh !== null && energyKwh > 0)
+              ? distKm / energyKwh : null;
+
+            _tripRows.push({
+              devName:   dev.name,
+              start:     tr.startTime,
+              durSec:    durSec,
+              distKm:    distKm,
+              energyKwh: energyKwh,
+              regenKwh:  regenKwh,
+              eff:       eff
+            });
+          });
+        });
+        _tripRows.sort(function(a, b) { return new Date(b.start) - new Date(a.start); });
+
+        // ── Build daily economy rows ─────────────────────────────────────────
+        // Aggregate trip rows by device + local calendar day
+        _dailyRows = [];
+        var dayMap = {}; // key: "devName|YYYY-MM-DD"
+        _tripRows.forEach(function(tr) {
+          if (!tr.start) return;
+          var d = new Date(tr.start);
+          var dayKey = tr.devName + '|' +
+            d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+          if (!dayMap[dayKey]) {
+            dayMap[dayKey] = { devName: tr.devName, date: dayKey.split('|')[1], distKm: 0, energyKwh: 0, hasEnergy: false };
+          }
+          dayMap[dayKey].distKm += (tr.distKm || 0);
+          if (tr.energyKwh !== null) {
+            dayMap[dayKey].energyKwh += tr.energyKwh;
+            dayMap[dayKey].hasEnergy = true;
+          }
+        });
+        Object.keys(dayMap).forEach(function(k) {
+          var row = dayMap[k];
+          var eff = (row.hasEnergy && row.energyKwh > 0) ? row.distKm / row.energyKwh : null;
+          _dailyRows.push({
+            devName:   row.devName,
+            date:      row.date,
+            distKm:    row.distKm,
+            energyKwh: row.hasEnergy ? row.energyKwh : null,
+            eff:       eff
+          });
+        });
+        _dailyRows.sort(function(a, b) {
+          var dc = b.date.localeCompare(a.date);
+          return dc !== 0 ? dc : a.devName.localeCompare(b.devName);
+        });
+
         renderLiveTable();
+        renderEnergyTable();
+        renderTripTable();
         renderChargeTable();
+        renderDailyTable();
         updateLiveCards();
+        updateEnergyCards();
+        updateTripCards();
         updateChargeCards();
+        updateDailyCards();
 
         hide('yev-loading');
         yevTab(_activeTab);
 
         var btn = document.getElementById('yev-export');
         if (btn) {
-          var hasData = _activeTab === 'live' ? _liveRows.length : _chargeRows.length;
+          var hasData = (_activeTab === 'charge' && _chargeRows.length) ||
+                        (_activeTab === 'trips'  && _tripRows.length)   ||
+                        (_activeTab === 'daily'  && _dailyRows.length)  ||
+                        (_liveRows.length && (_activeTab === 'live' || _activeTab === 'energy'));
           btn.disabled = !hasData;
           btn.style.opacity = hasData ? '1' : '.5';
         }
@@ -471,6 +826,22 @@ geotab.addin.yusenEvMonitor = function() {
         ? '<td style="' + TD_NA + bg + '">N/A</td>'
         : '<td style="' + TD_CTR + bg + '">' + fmt(r.range / 1000, 0) + ' km</td>';
 
+      // Energy Used
+      var energyCell = r.energyInKwh === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'font-weight:700;">' + r.energyInKwh.toFixed(2) + ' kWh</td>';
+
+      // Efficiency
+      var effCell;
+      if (r.effKmPerKwh === null) {
+        effCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var effColor = r.effKmPerKwh >= 6 ? 'color:#217346;font-weight:700;' :
+                       r.effKmPerKwh >= 4 ? 'color:#7f6000;font-weight:700;' :
+                       'color:#c00;font-weight:700;';
+        effCell = '<td style="' + TD_CTR + bg + effColor + '">' + r.effKmPerKwh.toFixed(1) + ' km/kWh</td>';
+      }
+
       html += '<tr>' +
         '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
         '<td style="' + TD_LEFT + bg + '">' + r.name + '</td>' +
@@ -480,11 +851,148 @@ geotab.addin.yusenEvMonitor = function() {
         socCell +
         pwrCell +
         rngCell +
+        energyCell +
+        effCell +
         '<td style="' + TD_CTR + bg + 'font-size:12px;">' + localTs(r.lastDate) + '</td>' +
         '</tr>';
     });
 
-    tbody.innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:24px;color:#888;">No EV status data found in the selected window.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="11" style="text-align:center;padding:24px;color:#888;">No EV status data found in the selected window.</td></tr>';
+  }
+
+  // ── Render Energy In/Out Table ────────────────────────────────────────────────
+  function renderEnergyTable() {
+    var tbody = document.getElementById('yev-tbody-energy');
+    if (!tbody) return;
+    var html = '';
+
+    _liveRows.forEach(function(r, i) {
+      var bg = (i % 2 === 0) ? 'background:#fff;' : 'background:#deeaf1;';
+
+      function eCell(val, color) {
+        if (val === null) return '<td style="' + TD_NA + bg + '">N/A</td>';
+        var style = TD_CTR + bg + (color || '');
+        return '<td style="' + style + '">' + val.toFixed(2) + '</td>';
+      }
+
+      var netKwh = (r.energyInKwh !== null && r.energyOutKwh !== null)
+        ? (r.energyInKwh - r.energyOutKwh) : null;
+
+      var effCell2;
+      if (r.effKmPerKwh === null) {
+        effCell2 = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var effColor2 = r.effKmPerKwh >= 6 ? 'color:#217346;font-weight:700;' :
+                        r.effKmPerKwh >= 4 ? 'color:#7f6000;font-weight:700;' :
+                        'color:#c00;font-weight:700;';
+        effCell2 = '<td style="' + TD_CTR + bg + effColor2 + '">' + r.effKmPerKwh.toFixed(1) + '</td>';
+      }
+
+      html += '<tr>' +
+        '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
+        '<td style="' + TD_LEFT + bg + '">' + r.name + '</td>' +
+        eCell(r.energyInKwh,      'color:#217346;font-weight:700;') +
+        eCell(r.energyInDriveKwh, 'color:#217346;') +
+        eCell(r.einIdleKwh,       'color:#c07000;') +
+        eCell(r.energyOutKwh,     'color:#2E75B6;font-weight:700;') +
+        eCell(r.energyOutDriveKwh,'color:#2E75B6;') +
+        eCell(r.eoutIdleKwh,      'color:#c07000;') +
+        eCell(netKwh,             'color:#1F4E79;font-weight:700;') +
+        effCell2 +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="10" style="text-align:center;padding:24px;color:#888;">No energy data found in the selected window.</td></tr>';
+  }
+
+  function updateEnergyCards() {
+    function sumField(field) {
+      var vals = _liveRows.filter(function(r) { return r[field] !== null; });
+      return vals.length ? vals.reduce(function(s, r) { return s + r[field]; }, 0) : null;
+    }
+    var totalIn    = sumField('energyInKwh');
+    var totalInDrv = sumField('energyInDriveKwh');
+    var totalInIdl = sumField('einIdleKwh');
+    var totalOut   = sumField('energyOutKwh');
+    var net        = (totalIn !== null && totalOut !== null) ? totalIn - totalOut : null;
+
+    function setCard(id, val) {
+      setText(id, val !== null ? val.toFixed(1) : '—');
+    }
+    setCard('yev-en-card-in',       totalIn);
+    setCard('yev-en-card-in-drive', totalInDrv);
+    setCard('yev-en-card-in-idle',  totalInIdl);
+    setCard('yev-en-card-out',      totalOut);
+    setCard('yev-en-card-net',      net);
+  }
+
+  // ── Render Trip Energy Table ──────────────────────────────────────────────────
+  function renderTripTable() {
+    var tbody = document.getElementById('yev-tbody-trips');
+    if (!tbody) return;
+    var html = '';
+
+    _tripRows.forEach(function(r, i) {
+      var bg = (i % 2 === 0) ? 'background:#fff;' : 'background:#deeaf1;';
+
+      var distCell = r.distKm === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + '">' + r.distKm.toFixed(1) + '</td>';
+
+      var durStr = '—';
+      if (r.durSec !== null) {
+        var h = Math.floor(r.durSec / 3600), m = Math.floor((r.durSec % 3600) / 60);
+        durStr = h + 'h ' + m + 'm';
+      }
+
+      var energyCell = r.energyKwh === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'color:#217346;font-weight:700;">' + r.energyKwh.toFixed(2) + '</td>';
+
+      var regenCell = r.regenKwh === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'color:#2E75B6;">' + r.regenKwh.toFixed(2) + '</td>';
+
+      var effCell;
+      if (r.eff === null) {
+        effCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var ec = r.eff >= 6 ? 'color:#217346;font-weight:700;' :
+                 r.eff >= 4 ? 'color:#7f6000;font-weight:700;' :
+                 'color:#c00;font-weight:700;';
+        effCell = '<td style="' + TD_CTR + bg + ec + '">' + r.eff.toFixed(1) + '</td>';
+      }
+
+      html += '<tr>' +
+        '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
+        '<td style="' + TD_LEFT + bg + '">' + r.devName + '</td>' +
+        '<td style="' + TD_CTR + bg + 'font-size:12px;">' + localTs(r.start) + '</td>' +
+        '<td style="' + TD_CTR + bg + '">' + durStr + '</td>' +
+        distCell +
+        energyCell +
+        regenCell +
+        effCell +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="8" style="text-align:center;padding:24px;color:#888;">No trips found in the selected window.</td></tr>';
+  }
+
+  function updateTripCards() {
+    setText('yev-tr-card-count', _tripRows.length);
+
+    var totalDist = _tripRows.reduce(function(s, r) { return s + (r.distKm || 0); }, 0);
+    setText('yev-tr-card-dist', _tripRows.length ? totalDist.toFixed(1) : '—');
+
+    var withKwh = _tripRows.filter(function(r) { return r.energyKwh !== null; });
+    var totalKwh = withKwh.reduce(function(s, r) { return s + r.energyKwh; }, 0);
+    setText('yev-tr-card-kwh', withKwh.length ? totalKwh.toFixed(1) : '—');
+    setText('yev-tr-card-avg', withKwh.length ? (totalKwh / withKwh.length).toFixed(2) : '—');
+
+    var withEff = _tripRows.filter(function(r) { return r.eff !== null; });
+    setText('yev-tr-card-eff', withEff.length
+      ? (withEff.reduce(function(s, r) { return s + r.eff; }, 0) / withEff.length).toFixed(1)
+      : '—');
   }
 
   // ── Render Charge Table ───────────────────────────────────────────────────────
@@ -545,6 +1053,11 @@ geotab.addin.yusenEvMonitor = function() {
     setText('yev-card-pwr', withPwr.length
       ? (withPwr.reduce(function(s, r) { return s + r.battPwr; }, 0) / withPwr.length).toFixed(1)
       : '—');
+
+    var withEff = _liveRows.filter(function(r) { return r.effKmPerKwh !== null; });
+    setText('yev-card-eff', withEff.length
+      ? (withEff.reduce(function(s, r) { return s + r.effKmPerKwh; }, 0) / withEff.length).toFixed(1)
+      : '—');
   }
 
   function updateChargeCards() {
@@ -564,12 +1077,72 @@ geotab.addin.yusenEvMonitor = function() {
     }
   }
 
+  // ── Render Daily Economy Table ────────────────────────────────────────────────
+  function renderDailyTable() {
+    var tbody = document.getElementById('yev-tbody-daily');
+    if (!tbody) return;
+    var html = '';
+    _dailyRows.forEach(function(r, i) {
+      var bg = (i % 2 === 0) ? 'background:#fff;' : 'background:#deeaf1;';
+
+      var distCell = r.distKm === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + '">' + r.distKm.toFixed(1) + '</td>';
+
+      var kwhCell = r.energyKwh === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'color:#217346;font-weight:700;">' + r.energyKwh.toFixed(2) + '</td>';
+
+      var effCell;
+      if (r.eff === null) {
+        effCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var ec = r.eff >= 6 ? 'color:#217346;font-weight:700;' :
+                 r.eff >= 4 ? 'color:#7f6000;font-weight:700;' :
+                 'color:#c00;font-weight:700;';
+        effCell = '<td style="' + TD_CTR + bg + ec + '">' + r.eff.toFixed(2) + ' km/kWh</td>';
+      }
+
+      html += '<tr>' +
+        '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
+        '<td style="' + TD_LEFT + bg + '">' + r.devName + '</td>' +
+        '<td style="' + TD_CTR + bg + '">' + r.date + '</td>' +
+        effCell +
+        distCell +
+        kwhCell +
+        '</tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">No daily data available for this window.</td></tr>';
+  }
+
+  function updateDailyCards() {
+    setText('yev-dy-card-count', _dailyRows.length);
+
+    var totalDist = _dailyRows.reduce(function(s, r) { return s + (r.distKm || 0); }, 0);
+    setText('yev-dy-card-dist', _dailyRows.length ? totalDist.toFixed(1) : '—');
+
+    var withKwh = _dailyRows.filter(function(r) { return r.energyKwh !== null; });
+    var totalKwh = withKwh.reduce(function(s, r) { return s + r.energyKwh; }, 0);
+    setText('yev-dy-card-kwh', withKwh.length ? totalKwh.toFixed(1) : '—');
+
+    var withEff = _dailyRows.filter(function(r) { return r.eff !== null; });
+    if (withEff.length) {
+      var avgEff = withEff.reduce(function(s, r) { return s + r.eff; }, 0) / withEff.length;
+      setText('yev-dy-card-eff', avgEff.toFixed(2));
+      var best = withEff.reduce(function(a, b) { return b.eff > a.eff ? b : a; });
+      setText('yev-dy-card-best', best.eff.toFixed(2));
+    } else {
+      setText('yev-dy-card-eff', '—');
+      setText('yev-dy-card-best', '—');
+    }
+  }
+
   // ── Export CSV ───────────────────────────────────────────────────────────────
   function exportCsv() {
     var lines, blob, filename;
 
     if (_activeTab === 'live' && _liveRows.length) {
-      lines = [['#', 'Vehicle', 'Serial', 'Ignition', 'Charge State', 'SoC (%)', 'Battery Power (kW)', 'Range Est (km)', 'Last Data (WIB)'].join(',')];
+      lines = [['#', 'Vehicle', 'Serial', 'Ignition', 'Charge State', 'SoC (%)', 'Battery Power (kW)', 'Range Est (km)', 'Energy Used (kWh)', 'Efficiency (km/kWh)', 'Last Data (WIB)'].join(',')];
       _liveRows.forEach(function(r, i) {
         var socPct = r.soc === null ? 'N/A' : (r.soc > 1 ? r.soc : r.soc * 100).toFixed(0);
         lines.push([
@@ -581,10 +1154,63 @@ geotab.addin.yusenEvMonitor = function() {
           socPct,
           r.battPwr !== null ? r.battPwr.toFixed(1) : 'N/A',
           r.range !== null ? (r.range / 1000).toFixed(0) : 'N/A',
+          r.energyInKwh !== null ? r.energyInKwh.toFixed(2) : 'N/A',
+          r.effKmPerKwh !== null ? r.effKmPerKwh.toFixed(1) : 'N/A',
           localTs(r.lastDate)
         ].join(','));
       });
       filename = 'yusen-ev-live.csv';
+
+    } else if (_activeTab === 'energy' && _liveRows.length) {
+      lines = [['#', 'Vehicle', 'Energy In Total (kWh)', 'Energy In Driving (kWh)', 'Energy In Idling (kWh)', 'Energy Out Total (kWh)', 'Energy Out Driving (kWh)', 'Energy Out Idling (kWh)', 'Net Energy (kWh)', 'Efficiency (km/kWh)'].join(',')];
+      _liveRows.forEach(function(r, i) {
+        var net = (r.energyInKwh !== null && r.energyOutKwh !== null) ? (r.energyInKwh - r.energyOutKwh).toFixed(2) : 'N/A';
+        function fv(v) { return v !== null ? v.toFixed(2) : 'N/A'; }
+        lines.push([
+          i + 1,
+          '"' + r.name + '"',
+          fv(r.energyInKwh), fv(r.energyInDriveKwh), fv(r.einIdleKwh),
+          fv(r.energyOutKwh), fv(r.energyOutDriveKwh), fv(r.eoutIdleKwh),
+          net,
+          r.effKmPerKwh !== null ? r.effKmPerKwh.toFixed(1) : 'N/A'
+        ].join(','));
+      });
+      filename = 'yusen-ev-energy.csv';
+
+    } else if (_activeTab === 'trips' && _tripRows.length) {
+      lines = [['#', 'Vehicle', 'Start (WIB)', 'Duration', 'Distance (km)', 'Energy Used (kWh)', 'Regen (kWh)', 'Efficiency (km/kWh)'].join(',')];
+      _tripRows.forEach(function(r, i) {
+        var durStr = '—';
+        if (r.durSec !== null) {
+          var h = Math.floor(r.durSec / 3600), m = Math.floor((r.durSec % 3600) / 60);
+          durStr = h + 'h ' + m + 'm';
+        }
+        lines.push([
+          i + 1,
+          '"' + r.devName + '"',
+          localTs(r.start),
+          durStr,
+          r.distKm    !== null ? r.distKm.toFixed(1)    : 'N/A',
+          r.energyKwh !== null ? r.energyKwh.toFixed(2) : 'N/A',
+          r.regenKwh  !== null ? r.regenKwh.toFixed(2)  : 'N/A',
+          r.eff       !== null ? r.eff.toFixed(1)        : 'N/A'
+        ].join(','));
+      });
+      filename = 'yusen-ev-trip-energy.csv';
+
+    } else if (_activeTab === 'daily' && _dailyRows.length) {
+      lines = [['#', 'Vehicle', 'Date', 'Economy (km/kWh)', 'Distance (km)', 'Energy Used (kWh)'].join(',')];
+      _dailyRows.forEach(function(r, i) {
+        lines.push([
+          i + 1,
+          '"' + r.devName + '"',
+          r.date,
+          r.eff       !== null ? r.eff.toFixed(2)       : 'N/A',
+          r.distKm    !== null ? r.distKm.toFixed(1)    : 'N/A',
+          r.energyKwh !== null ? r.energyKwh.toFixed(2) : 'N/A'
+        ].join(','));
+      });
+      filename = 'yusen-ev-daily-economy.csv';
 
     } else if (_activeTab === 'charge' && _chargeRows.length) {
       lines = [['#', 'Vehicle', 'Start (WIB)', 'Duration', 'Start SoC (%)', 'End SoC (%)', 'Delta SoC (%)', 'Energy (kWh)', 'Type'].join(',')];
