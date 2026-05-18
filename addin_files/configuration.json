@@ -24,6 +24,13 @@
       "menuName": {
         "en": "Fuel Harness Report"
       }
+    },
+    {
+      "url": "https://sonyadam27.github.io/fuel-usage-addin/addin_files/yusenEvMonitor.html",
+      "path": "EngineMaintenanceLink/",
+      "menuName": {
+        "en": "Yusen EV Monitor"
+      }
     }
   ]
 }

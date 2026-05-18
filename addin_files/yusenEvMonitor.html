@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yusen EV Monitor</title>
+<style>
+@keyframes yev-spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="yev-root" style="font-family:Calibri,Arial,sans-serif;max-width:1600px;margin:0 auto;color:#222;box-sizing:border-box;border:2px solid #1F4E79;border-radius:10px;box-shadow:0 4px 20px rgba(31,78,121,.3);background:#fff;overflow:hidden">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
+    <div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">&#9889; Yusen EV Monitor</h1>
+      <div style="font-size:14px;color:#fff;opacity:.9;margin-top:4px;font-weight:600">Database: <strong id="yev-dbname">&#8212;</strong></div>
+    </div>
+    <div id="yev-updated" style="font-size:12px;color:rgba(255,255,255,.8)"></div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div style="background:#163960;display:flex;gap:0;border-bottom:2px solid #1F4E79">
+    <button id="yev-tab-live" onclick="yevTab('live')" style="padding:10px 24px;background:#2E75B6;color:#fff;border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9679; Live Status</button>
+    <button id="yev-tab-charge" onclick="yevTab('charge')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9875; Charge Sessions</button>
+  </div>
+
+  <!-- Controls -->
+  <div style="background:linear-gradient(180deg,#EBF3FB 0%,#D6E8F5 100%);border-left:4px solid #1F4E79;border-bottom:1px solid #B8CCE4;padding:14px 20px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div id="yev-ctrl-window" style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Data Window</label>
+      <select id="yev-window" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+        <option value="24">Last 24 hours</option>
+        <option value="48">Last 48 hours</option>
+        <option value="72">Last 72 hours</option>
+        <option value="168">Last 7 days</option>
+        <option value="720">Last 30 days</option>
+      </select>
+    </div>
+    <button id="yev-load" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">&#8635; Load / Refresh</button>
+    <button id="yev-export" disabled style="padding:8px 22px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;opacity:.5">&#8659; Export CSV</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <!-- Live Status Cards -->
+  <div id="yev-cards-live" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total EV Devices</div>
+      <div id="yev-card-count" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg State of Charge</div>
+      <div id="yev-card-soc" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">battery %</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Ignition ON</div>
+      <div id="yev-card-ign" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles active</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Charging Now</div>
+      <div id="yev-card-chg" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles charging</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Battery Power</div>
+      <div id="yev-card-pwr" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kW</div>
+    </div>
+  </div>
+
+  <!-- Charge Session Cards -->
+  <div id="yev-cards-charge" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Sessions</div>
+      <div id="yev-ch-card-count" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">charge events</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Energy</div>
+      <div id="yev-ch-card-kwh" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh consumed</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Session kWh</div>
+      <div id="yev-ch-card-avg" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">per charge</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">DC Sessions</div>
+      <div id="yev-ch-card-dc" style="font-size:28px;font-weight:800;color:#2E75B6;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">fast charge</div>
+    </div>
+    <div style="flex:1;min-width:150px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg SoC Gained</div>
+      <div id="yev-ch-card-delta" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">% per session</div>
+    </div>
+  </div>
+
+  <!-- Loading / Error -->
+  <div id="yev-loading" style="display:none;text-align:center;padding:48px 20px;color:#666;background:#fff">
+    <div style="width:44px;height:44px;border:4px solid #dce8f0;border-top-color:#1F4E79;border-radius:50%;animation:yev-spin .8s linear infinite;margin:0 auto 14px"></div>
+    <div>Loading EV data&hellip;</div>
+    <div id="yev-progress" style="font-size:13px;color:#1F4E79;margin-top:6px"></div>
+  </div>
+  <div id="yev-error" style="display:none;background:#fde8e8;color:#a00;border:1px solid #f5b8b8;border-radius:4px;padding:12px 16px;margin:12px;font-size:14px"></div>
+
+  <!-- Live Status Table -->
+  <div id="yev-table-live" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="yev-tbl-live" style="width:100%;border-collapse:collapse;font-size:14px;min-width:900px">
+      <thead>
+        <tr>
+          <th colspan="3" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Status</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Battery</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Range</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Serial</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Ignition</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Charge State</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">SoC (%)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Battery Power (kW)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Range Est. (km)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Last Data (WIB)</th>
+        </tr>
+      </thead>
+      <tbody id="yev-tbody-live"></tbody>
+    </table>
+  </div>
+
+  <!-- Charge Sessions Table -->
+  <div id="yev-table-charge" style="display:none;border:2px solid #1F4E79;border-top:none;border-radius:0 0 8px 8px;overflow-x:auto">
+    <table id="yev-tbl-charge" style="width:100%;border-collapse:collapse;font-size:14px;min-width:900px">
+      <thead>
+        <tr>
+          <th colspan="2" style="background:#2E75B6;padding:7px 10px;border:1px solid #1F4E79;border-left:2px solid #1F4E79;border-top:2px solid #1F4E79;"></th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Session Time</th>
+          <th colspan="3" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">State of Charge</th>
+          <th colspan="2" style="background:#2E75B6;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:7px 10px;border:1px solid #1F4E79;border-top:2px solid #1F4E79;border-right:2px solid #1F4E79;letter-spacing:.5px;text-transform:uppercase">Energy</th>
+        </tr>
+        <tr>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-left:2px solid #1F4E79;font-size:13px;white-space:nowrap">#</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Vehicle</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Start (WIB)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Duration</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Start SoC (%)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">End SoC (%)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">&#916; SoC (%)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Energy (kWh)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;border-right:2px solid #1F4E79;font-size:13px;white-space:nowrap">Type</th>
+        </tr>
+      </thead>
+      <tbody id="yev-tbody-charge"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+geotab.addin.yusenEvMonitor = function() {
+  'use strict';
+
+  // Standard Geotab EV diagnostic IDs — no custom curves needed
+  var DIAG = {
+    soc:        'DiagnosticStateOfChargeId',
+    chrgState:  'DiagnosticElectricVehicleChargingStateId',
+    battPower:  'DiagnosticElectricVehicleBatteryPowerId',
+    rangeEst:   'DiagnosticElectricVehicleRangeId',
+    ignition:   'DiagnosticIgnitionId'
+  };
+
+  // Charging state values from Geotab SDK
+  var CHARGE_LABELS = { 0: 'Not Charging', 1: 'Charging', 2: 'Fully Charged', 3: 'Fault' };
+
+  var _api, _state, _liveRows = [], _chargeRows = [], _timer = null, _activeTab = 'live';
+  var _devMap = {};
+
+  var TD_CTR  = 'padding:7px 8px;text-align:center;border:1px solid #dbe8f2;';
+  var TD_LEFT = 'padding:7px 8px;text-align:left;border:1px solid #dbe8f2;font-weight:600;';
+  var TD_NA   = 'padding:7px 8px;text-align:center;border:1px solid #dbe8f2;color:#aaa;font-size:12px;';
+
+  function fmt(v, d) { return (v == null) ? '—' : (+v).toFixed(d == null ? 1 : d); }
+
+  function tz() {
+    var o = new Date().getTimezoneOffset();
+    var abs = Math.abs(o), h = Math.floor(abs / 60), m = abs % 60;
+    return 'UTC' + (o <= 0 ? '+' : '-') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  function localTs(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0') + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function fmtDuration(isoStr) {
+    if (!isoStr) return '—';
+    // Handles .NET TimeSpan format "HH:MM:SS.fffffff" or ISO 8601 duration
+    var match = isoStr.match(/(\d+):(\d+):(\d+)/);
+    if (match) {
+      var h = parseInt(match[1], 10), m = parseInt(match[2], 10);
+      return h + 'h ' + m + 'm';
+    }
+    return isoStr;
+  }
+
+  function show(id, flex) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = flex ? 'flex' : 'block';
+  }
+  function hide(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+  function setText(id, v) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = v;
+  }
+  function setProgress(msg) { setText('yev-progress', msg); }
+
+  function showError(msg) {
+    hide('yev-loading');
+    var el = document.getElementById('yev-error');
+    if (el) { el.style.display = 'block'; el.textContent = 'Error: ' + msg; }
+  }
+
+  // ── Tab switching ────────────────────────────────────────────────────────────
+  window.yevTab = function(tab) {
+    _activeTab = tab;
+    var liveBg   = tab === 'live'   ? '#2E75B6' : 'transparent';
+    var chargeBg = tab === 'charge' ? '#2E75B6' : 'transparent';
+    var liveCol   = tab === 'live'   ? '#fff' : 'rgba(255,255,255,.7)';
+    var chargeCol = tab === 'charge' ? '#fff' : 'rgba(255,255,255,.7)';
+    var tl = document.getElementById('yev-tab-live');
+    var tc = document.getElementById('yev-tab-charge');
+    if (tl) { tl.style.background = liveBg; tl.style.color = liveCol; }
+    if (tc) { tc.style.background = chargeBg; tc.style.color = chargeCol; }
+
+    // Cards
+    hide('yev-cards-live'); hide('yev-cards-charge');
+    hide('yev-table-live'); hide('yev-table-charge');
+
+    if (tab === 'live' && _liveRows.length) {
+      show('yev-cards-live', true);
+      show('yev-table-live');
+    }
+    if (tab === 'charge' && _chargeRows.length) {
+      show('yev-cards-charge', true);
+      show('yev-table-charge');
+    }
+
+    // Window selector: hide for charge (use fixed range from control)
+    var wctrl = document.getElementById('yev-ctrl-window');
+    if (wctrl) wctrl.style.display = tab === 'live' ? 'flex' : 'none';
+
+    // Enable export if data ready
+    var btn = document.getElementById('yev-export');
+    if (btn) {
+      var hasData = (tab === 'live' && _liveRows.length) || (tab === 'charge' && _chargeRows.length);
+      btn.disabled = !hasData;
+      btn.style.opacity = hasData ? '1' : '.5';
+    }
+  };
+
+  // ── Load ─────────────────────────────────────────────────────────────────────
+  function load() {
+    hide('yev-cards-live'); hide('yev-cards-charge');
+    hide('yev-table-live'); hide('yev-table-charge');
+    hide('yev-error');
+    show('yev-loading');
+
+    var hours = parseInt(document.getElementById('yev-window').value, 10) || 24;
+    var toDate = new Date();
+    var fromDate = new Date(toDate.getTime() - hours * 3600000);
+
+    // For charge sessions always pull 30 days
+    var chargeFrom = new Date(toDate.getTime() - 30 * 24 * 3600000);
+    var fromIso    = fromDate.toISOString();
+    var toIso      = toDate.toISOString();
+    var chFromIso  = chargeFrom.toISOString();
+
+    setProgress('Fetching EV vehicle list…');
+
+    _api.call('Get', {
+      typeName: 'Device',
+      search: {
+        fromDate: fromIso,
+        groups: [{ id: 'GroupBatteryElectricVehicleId' }]
+      }
+    }, function(devices) {
+      if (!devices || !devices.length) {
+        hide('yev-loading');
+        showError('No Battery Electric Vehicles found in this database.');
+        return;
+      }
+
+      setProgress('Found ' + devices.length + ' EV(s). Loading status data…');
+
+      _devMap = {};
+      devices.forEach(function(d) { _devMap[d.id] = d; });
+      var deviceIds = devices.map(function(d) { return d.id; });
+
+      // Build multicall: StatusData per device + ChargeEvent per device
+      var statusCalls = deviceIds.map(function(devId) {
+        return ['Get', {
+          typeName: 'StatusData',
+          search: {
+            fromDate: fromIso,
+            toDate: toIso,
+            deviceSearch: { id: devId }
+          }
+        }];
+      });
+
+      var chargeCalls = deviceIds.map(function(devId) {
+        return ['Get', {
+          typeName: 'ChargeEvent',
+          search: {
+            fromDate: chFromIso,
+            toDate: toIso,
+            deviceSearch: { id: devId }
+          }
+        }];
+      });
+
+      _api.multiCall(statusCalls.concat(chargeCalls), function(allResults) {
+        var n = deviceIds.length;
+        var statusResults = allResults.slice(0, n);
+        var chargeResults = allResults.slice(n);
+
+        // ── Build live rows ──────────────────────────────────────────────────
+        _liveRows = [];
+        devices.forEach(function(dev, di) {
+          var recs = statusResults[di] || [];
+
+          function latest(diagId) {
+            var filtered = recs.filter(function(r) { return r.diagnostic && r.diagnostic.id === diagId; });
+            if (!filtered.length) return null;
+            return filtered.reduce(function(a, b) {
+              return new Date(a.dateTime) > new Date(b.dateTime) ? a : b;
+            });
+          }
+
+          var ignRec   = latest(DIAG.ignition);
+          var socRec   = latest(DIAG.soc);
+          var chrgRec  = latest(DIAG.chrgState);
+          var pwrRec   = latest(DIAG.battPower);
+          var rngRec   = latest(DIAG.rangeEst);
+
+          var lastRec = recs.reduce(function(a, b) {
+            return (!a || new Date(b.dateTime) > new Date(a.dateTime)) ? b : a;
+          }, null);
+
+          _liveRows.push({
+            id:       dev.id,
+            name:     dev.name,
+            serial:   dev.serialNumber || '—',
+            ignition: ignRec  ? ignRec.data  : null,
+            soc:      socRec  ? socRec.data  : null,
+            chrgSt:   chrgRec ? chrgRec.data : null,
+            battPwr:  pwrRec  ? pwrRec.data  : null,
+            range:    rngRec  ? rngRec.data  : null,
+            lastDate: lastRec ? lastRec.dateTime : null
+          });
+        });
+        _liveRows.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+        // ── Build charge rows ────────────────────────────────────────────────
+        _chargeRows = [];
+        devices.forEach(function(dev, di) {
+          var events = chargeResults[di] || [];
+          events.forEach(function(ev) {
+            _chargeRows.push({
+              devName:    dev.name,
+              startTime:  ev.startTime,
+              duration:   ev.duration,
+              startSoc:   ev.startStateOfCharge != null ? ev.startStateOfCharge * 100 : null,
+              endSoc:     ev.endStateOfCharge   != null ? ev.endStateOfCharge * 100   : null,
+              energyKwh:  ev.energyConsumedKwh,
+              chargeType: ev.chargeType || '—',
+              isEst:      ev.chargeIsEstimated
+            });
+          });
+        });
+        _chargeRows.sort(function(a, b) { return new Date(b.startTime) - new Date(a.startTime); });
+
+        renderLiveTable();
+        renderChargeTable();
+        updateLiveCards();
+        updateChargeCards();
+
+        hide('yev-loading');
+        yevTab(_activeTab);
+
+        var btn = document.getElementById('yev-export');
+        if (btn) {
+          var hasData = _activeTab === 'live' ? _liveRows.length : _chargeRows.length;
+          btn.disabled = !hasData;
+          btn.style.opacity = hasData ? '1' : '.5';
+        }
+        setText('yev-updated', 'Updated: ' + localTs(new Date().toISOString()) + ' ' + tz());
+      },
+      function(err) { showError(err || 'Unknown error loading data'); });
+    },
+    function(err) { showError(err || 'Failed to fetch devices'); });
+  }
+
+  // ── Render Live Table ─────────────────────────────────────────────────────────
+  function renderLiveTable() {
+    var tbody = document.getElementById('yev-tbody-live');
+    if (!tbody) return;
+    var html = '';
+
+    _liveRows.forEach(function(r, i) {
+      var bg = (i % 2 === 0) ? 'background:#fff;' : 'background:#deeaf1;';
+
+      // Ignition
+      var ignOn = r.ignition === 1 || r.ignition === true;
+      var ignCell = ignOn
+        ? '<span style="color:#217346;font-weight:700">&#9679; ON</span>'
+        : '<span style="color:#888">&#9675; OFF</span>';
+
+      // Charge State
+      var chrgCell;
+      if (r.chrgSt === null) {
+        chrgCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var lbl = CHARGE_LABELS[r.chrgSt] || ('State ' + r.chrgSt);
+        var chrgColor = (r.chrgSt === 1) ? 'color:#217346;font-weight:700;' :
+                        (r.chrgSt === 2) ? 'color:#1F4E79;font-weight:700;' :
+                        (r.chrgSt === 3) ? 'color:#c00;font-weight:700;' : '';
+        chrgCell = '<td style="' + TD_CTR + bg + chrgColor + '">' + lbl + '</td>';
+      }
+
+      // SoC with colour bands
+      var socCell;
+      if (r.soc === null) {
+        socCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var socPct = r.soc > 1 ? r.soc : r.soc * 100;  // handle 0-1 or 0-100 scale
+        var socColor = socPct < 20 ? 'color:#c00;font-weight:700;' :
+                       socPct < 50 ? 'color:#7f6000;font-weight:700;' :
+                       'color:#217346;font-weight:700;';
+        socCell = '<td style="' + TD_CTR + bg + socColor + '">' + socPct.toFixed(0) + '%</td>';
+      }
+
+      // Battery Power (negative = charging)
+      var pwrCell;
+      if (r.battPwr === null) {
+        pwrCell = '<td style="' + TD_NA + bg + '">N/A</td>';
+      } else {
+        var pwrColor = r.battPwr < -1 ? 'color:#217346;font-weight:700;' :
+                       r.battPwr > 50  ? 'color:#c00;font-weight:700;' : '';
+        var pwrLabel = r.battPwr < -1 ? fmt(r.battPwr, 1) + ' (Charging)' : fmt(r.battPwr, 1);
+        pwrCell = '<td style="' + TD_CTR + bg + pwrColor + '">' + pwrLabel + '</td>';
+      }
+
+      // Range
+      var rngCell = r.range === null
+        ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + '">' + fmt(r.range / 1000, 0) + ' km</td>';
+
+      html += '<tr>' +
+        '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
+        '<td style="' + TD_LEFT + bg + '">' + r.name + '</td>' +
+        '<td style="' + TD_CTR + bg + 'font-size:12px;color:#666;">' + r.serial + '</td>' +
+        '<td style="' + TD_CTR + bg + '">' + ignCell + '</td>' +
+        chrgCell +
+        socCell +
+        pwrCell +
+        rngCell +
+        '<td style="' + TD_CTR + bg + 'font-size:12px;">' + localTs(r.lastDate) + '</td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:24px;color:#888;">No EV status data found in the selected window.</td></tr>';
+  }
+
+  // ── Render Charge Table ───────────────────────────────────────────────────────
+  function renderChargeTable() {
+    var tbody = document.getElementById('yev-tbody-charge');
+    if (!tbody) return;
+    var html = '';
+
+    _chargeRows.forEach(function(r, i) {
+      var bg = (i % 2 === 0) ? 'background:#fff;' : 'background:#deeaf1;';
+      var delta = (r.startSoc !== null && r.endSoc !== null) ? (r.endSoc - r.startSoc) : null;
+      var typeColor = r.chargeType === 'DC' ? 'color:#2E75B6;font-weight:700;' :
+                      r.chargeType === 'AC' ? 'color:#217346;font-weight:700;' : '';
+
+      var startSocCell = r.startSoc === null ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + '">' + r.startSoc.toFixed(0) + '%</td>';
+      var endSocCell   = r.endSoc === null ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + '">' + r.endSoc.toFixed(0) + '%</td>';
+      var deltaCell    = delta === null ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'color:#217346;font-weight:700;">+' + delta.toFixed(0) + '%</td>';
+      var kwhCell      = r.energyKwh == null ? '<td style="' + TD_NA + bg + '">N/A</td>'
+        : '<td style="' + TD_CTR + bg + 'font-weight:700;">' + r.energyKwh.toFixed(2) + ' kWh' + (r.isEst ? ' *' : '') + '</td>';
+
+      html += '<tr>' +
+        '<td style="' + TD_CTR + bg + '">' + (i + 1) + '</td>' +
+        '<td style="' + TD_LEFT + bg + '">' + r.devName + '</td>' +
+        '<td style="' + TD_CTR + bg + 'font-size:12px;">' + localTs(r.startTime) + '</td>' +
+        '<td style="' + TD_CTR + bg + '">' + fmtDuration(r.duration) + '</td>' +
+        startSocCell +
+        endSocCell +
+        deltaCell +
+        kwhCell +
+        '<td style="' + TD_CTR + bg + typeColor + '">' + r.chargeType + '</td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:24px;color:#888;">No charge sessions found in the last 30 days.</td></tr>';
+  }
+
+  // ── Cards ─────────────────────────────────────────────────────────────────────
+  function updateLiveCards() {
+    setText('yev-card-count', _liveRows.length);
+
+    var withSoc = _liveRows.filter(function(r) { return r.soc !== null; });
+    if (withSoc.length) {
+      var avgSoc = withSoc.reduce(function(s, r) {
+        return s + (r.soc > 1 ? r.soc : r.soc * 100);
+      }, 0) / withSoc.length;
+      setText('yev-card-soc', avgSoc.toFixed(0) + '%');
+    } else {
+      setText('yev-card-soc', '—');
+    }
+
+    setText('yev-card-ign', _liveRows.filter(function(r) { return r.ignition === 1 || r.ignition === true; }).length);
+    setText('yev-card-chg', _liveRows.filter(function(r) { return r.chrgSt === 1; }).length);
+
+    var withPwr = _liveRows.filter(function(r) { return r.battPwr !== null; });
+    setText('yev-card-pwr', withPwr.length
+      ? (withPwr.reduce(function(s, r) { return s + r.battPwr; }, 0) / withPwr.length).toFixed(1)
+      : '—');
+  }
+
+  function updateChargeCards() {
+    setText('yev-ch-card-count', _chargeRows.length);
+
+    var totalKwh = _chargeRows.reduce(function(s, r) { return s + (r.energyKwh || 0); }, 0);
+    setText('yev-ch-card-kwh', _chargeRows.length ? totalKwh.toFixed(1) : '—');
+    setText('yev-ch-card-avg', _chargeRows.length ? (totalKwh / _chargeRows.length).toFixed(1) : '—');
+    setText('yev-ch-card-dc', _chargeRows.filter(function(r) { return r.chargeType === 'DC'; }).length);
+
+    var withDelta = _chargeRows.filter(function(r) { return r.startSoc !== null && r.endSoc !== null; });
+    if (withDelta.length) {
+      var avgDelta = withDelta.reduce(function(s, r) { return s + (r.endSoc - r.startSoc); }, 0) / withDelta.length;
+      setText('yev-ch-card-delta', '+' + avgDelta.toFixed(0) + '%');
+    } else {
+      setText('yev-ch-card-delta', '—');
+    }
+  }
+
+  // ── Export CSV ───────────────────────────────────────────────────────────────
+  function exportCsv() {
+    var lines, blob, filename;
+
+    if (_activeTab === 'live' && _liveRows.length) {
+      lines = [['#', 'Vehicle', 'Serial', 'Ignition', 'Charge State', 'SoC (%)', 'Battery Power (kW)', 'Range Est (km)', 'Last Data (WIB)'].join(',')];
+      _liveRows.forEach(function(r, i) {
+        var socPct = r.soc === null ? 'N/A' : (r.soc > 1 ? r.soc : r.soc * 100).toFixed(0);
+        lines.push([
+          i + 1,
+          '"' + r.name + '"',
+          r.serial,
+          (r.ignition === 1 || r.ignition === true) ? 'ON' : 'OFF',
+          r.chrgSt !== null ? (CHARGE_LABELS[r.chrgSt] || r.chrgSt) : 'N/A',
+          socPct,
+          r.battPwr !== null ? r.battPwr.toFixed(1) : 'N/A',
+          r.range !== null ? (r.range / 1000).toFixed(0) : 'N/A',
+          localTs(r.lastDate)
+        ].join(','));
+      });
+      filename = 'yusen-ev-live.csv';
+
+    } else if (_activeTab === 'charge' && _chargeRows.length) {
+      lines = [['#', 'Vehicle', 'Start (WIB)', 'Duration', 'Start SoC (%)', 'End SoC (%)', 'Delta SoC (%)', 'Energy (kWh)', 'Type'].join(',')];
+      _chargeRows.forEach(function(r, i) {
+        var delta = (r.startSoc !== null && r.endSoc !== null) ? (r.endSoc - r.startSoc).toFixed(0) : 'N/A';
+        lines.push([
+          i + 1,
+          '"' + r.devName + '"',
+          localTs(r.startTime),
+          fmtDuration(r.duration),
+          r.startSoc !== null ? r.startSoc.toFixed(0) : 'N/A',
+          r.endSoc   !== null ? r.endSoc.toFixed(0)   : 'N/A',
+          delta !== 'N/A' ? '+' + delta : 'N/A',
+          r.energyKwh != null ? r.energyKwh.toFixed(2) : 'N/A',
+          r.chargeType
+        ].join(','));
+      });
+      filename = 'yusen-ev-charge-sessions.csv';
+    } else { return; }
+
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────────
+  return {
+    initialize: function(freshApi, freshState, cb) {
+      _api = freshApi; _state = freshState;
+      var db = (_state && _state.database) ? _state.database :
+               (typeof geotab !== 'undefined' && geotab.database) ? geotab.database : '';
+      setText('yev-dbname', db || '—');
+      document.getElementById('yev-load').addEventListener('click', load);
+      document.getElementById('yev-export').addEventListener('click', exportCsv);
+      cb();
+    },
+    focus: function(freshApi, freshState) {
+      _api = freshApi; _state = freshState;
+      load();
+      _timer = setInterval(load, 60000);
+    },
+    blur: function() {
+      if (_timer) { clearInterval(_timer); _timer = null; }
+    }
+  };
+};
+</script>
+</body>
+</html>
