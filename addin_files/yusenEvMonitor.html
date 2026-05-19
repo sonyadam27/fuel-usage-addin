@@ -627,15 +627,15 @@ geotab.addin.yusenEvMonitor = function() {
         devices.forEach(function(dev, di) {
           var events = chargeResults[di] || [];
           events.forEach(function(ev) {
-            // ChargeEvent SoC is returned as a fraction 0–1; convert to percentage
+            // ChargeEvent SoC may be 0–1 fraction or 0–100 percentage depending on firmware/API version
             var rawStart = ev.startStateOfCharge != null ? ev.startStateOfCharge : null;
             var rawEnd   = ev.endStateOfCharge   != null ? ev.endStateOfCharge   : null;
             _chargeRows.push({
               devName:    dev.name,
               startTime:  ev.startTime,
               duration:   ev.duration,
-              startSoc:   rawStart !== null ? rawStart * 100 : null,
-              endSoc:     rawEnd   !== null ? rawEnd   * 100 : null,
+              startSoc:   rawStart !== null ? (rawStart <= 1 ? rawStart * 100 : rawStart) : null,
+              endSoc:     rawEnd   !== null ? (rawEnd   <= 1 ? rawEnd   * 100 : rawEnd)   : null,
               energyKwh:  ev.energyConsumedKwh,
               chargeType: ev.chargeType || '—',
               isEst:      ev.chargeIsEstimated
