@@ -608,7 +608,7 @@ geotab.addin.yusenEvMonitor = function() {
             ignition:         ignRec  ? ignRec.data  : null,
             soc:              socRec  ? socRec.data  : null,
             chrgSt:           chrgRec ? chrgRec.data : null,
-            battPwr:          pwrRec  ? pwrRec.data  : null,
+            battPwr:          pwrRec  ? pwrRec.data / 1000 : null,
             range:            rngRec  ? rngRec.data  : null,
             energyInKwh:      energyInKwh,
             energyOutKwh:     energyOutKwh,
