@@ -1242,9 +1242,32 @@ geotab.addin.yusenEvMonitor = function() {
   return {
     initialize: function(freshApi, freshState, cb) {
       _api = freshApi; _state = freshState;
-      var db = (_state && _state.database) ? _state.database :
-               (typeof geotab !== 'undefined' && geotab.database) ? geotab.database : '';
-      setText('yev-dbname', db || '—');
+
+      function setDb(db) { setText('yev-dbname', db || '—'); }
+
+      // 1. state object
+      var db = (_state && _state.database) ? _state.database : null;
+      // 2. global geotab object
+      if (!db && typeof geotab !== 'undefined' && geotab.database) db = geotab.database;
+      // 3. parse from URL path: my.geotab.com/{database}/...
+      if (!db) {
+        var m = window.location.pathname.match(/^\/([^\/]+)\//);
+        if (m && m[1] && m[1] !== '#') db = m[1];
+      }
+      // 4. parse from URL hash: #addin-{database}_...
+      if (!db) {
+        var hm = window.location.hash.match(/^#addin-([^_]+)_/);
+        if (hm && hm[1]) db = hm[1];
+      }
+      setDb(db);
+
+      // 5. fallback: ask the API for the session
+      if (!db && _api) {
+        _api.getSession(function(sess) {
+          if (sess && sess.database) setDb(sess.database);
+        });
+      }
+
       document.getElementById('yev-load').addEventListener('click', load);
       document.getElementById('yev-export').addEventListener('click', exportCsv);
       cb();
