@@ -442,8 +442,8 @@ geotab.addin.yusenEvMonitor = function() {
       show('yev-cards-charge', true);
       show('yev-table-charge');
     }
-    if (tab === 'daily' && _dailyRows.length) {
-      show('yev-cards-daily', true);
+    if (tab === 'daily') {
+      show('yev-cards-daily', _dailyRows.length > 0);
       show('yev-table-daily');
     }
 
