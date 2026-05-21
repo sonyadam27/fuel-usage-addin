@@ -672,7 +672,7 @@ geotab.addin.yusenEvMonitor = function() {
           }
 
           trips.forEach(function(tr) {
-            var distKm = tr.distance != null ? tr.distance / 1000 : null;
+            var distKm = tr.distance != null ? tr.distance : null; // Trip.distance is already in km
             var durSec = tr.drivingDuration != null
               ? (function() {
                   var m = String(tr.drivingDuration).match(/(\d+):(\d+):(\d+)/);
@@ -680,10 +680,10 @@ geotab.addin.yusenEvMonitor = function() {
                 })()
               : null;
 
-            var einStart  = nearest(einTl,  tr.startTime);
-            var einStop   = nearest(einTl,  tr.stopTime);
-            var eoutStart = nearest(eoutTl, tr.startTime);
-            var eoutStop  = nearest(eoutTl, tr.stopTime);
+            var einStart  = nearest(einTl,  tr.start);
+            var einStop   = nearest(einTl,  tr.stop);
+            var eoutStart = nearest(eoutTl, tr.start);
+            var eoutStop  = nearest(eoutTl, tr.stop);
 
             var energyKwh = (einStart && einStop && einStop.id !== einStart.id)
               ? Math.max(0, (einStop.data - einStart.data) / 1000) : null;
@@ -694,7 +694,7 @@ geotab.addin.yusenEvMonitor = function() {
 
             _tripRows.push({
               devName:   dev.name,
-              start:     tr.startTime,
+              start:     tr.start,
               durSec:    durSec,
               distKm:    distKm,
               energyKwh: energyKwh,
