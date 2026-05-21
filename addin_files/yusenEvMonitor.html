@@ -593,7 +593,7 @@ geotab.addin.yusenEvMonitor = function() {
           if (odomSpan.first && odomSpan.last && odomSpan.first !== odomSpan.last) {
             distKm = (odomSpan.last.data - odomSpan.first.data) / 1000;
           }
-          if (distKm !== null && energyInKwh !== null && energyInKwh > 0) {
+          if (distKm !== null && energyInKwh !== null && energyInKwh >= 0.01) {
             effKmPerKwh = distKm / energyInKwh;
           }
 
@@ -689,7 +689,7 @@ geotab.addin.yusenEvMonitor = function() {
               ? Math.max(0, (einStop.data - einStart.data) / 1000) : null;
             var regenKwh  = (eoutStart && eoutStop && eoutStop.id !== eoutStart.id)
               ? Math.max(0, (eoutStop.data - eoutStart.data) / 1000) : null;
-            var eff = (distKm !== null && energyKwh !== null && energyKwh > 0)
+            var eff = (distKm !== null && energyKwh !== null && energyKwh >= 0.01)
               ? distKm / energyKwh : null;
 
             _tripRows.push({
