@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yusen EV Monitor</title>
+<title>EV Monitoring Report</title>
 <style>
 @keyframes yev-spin{to{transform:rotate(360deg)}}
 </style>
@@ -14,7 +14,7 @@
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
     <div>
-      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">&#9889; Yusen EV Monitor</h1>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">&#9889; EV Monitoring Report</h1>
       <div style="font-size:14px;color:#fff;opacity:.9;margin-top:4px;font-weight:600">Database: <strong id="yev-dbname">&#8212;</strong></div>
     </div>
     <div id="yev-updated" style="font-size:12px;color:rgba(255,255,255,.8)"></div>
@@ -165,7 +165,7 @@
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Ignition</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Charge State</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">SoC (%)</th>
-          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Battery Power (kW)</th>
+          <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap;cursor:help" title="Negative value = battery charging (power flowing IN). Positive value = battery discharging (power flowing OUT for driving).">Battery Power (kW) &#9432;</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Range Est. (km)</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Energy Used (kWh)</th>
           <th style="background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;border:1px solid #2E75B6;font-size:13px;white-space:nowrap">Efficiency (km/kWh)</th>
