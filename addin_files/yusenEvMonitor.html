@@ -720,14 +720,14 @@ geotab.addin.yusenEvMonitor = function() {
             dayMap[dayKey] = { devName: tr.devName, date: dayKey.split('|')[1], distKm: 0, energyKwh: 0, hasEnergy: false };
           }
           dayMap[dayKey].distKm += (tr.distKm || 0);
-          if (tr.energyKwh !== null) {
+          if (tr.energyKwh !== null && tr.energyKwh >= 0.01) {
             dayMap[dayKey].energyKwh += tr.energyKwh;
             dayMap[dayKey].hasEnergy = true;
           }
         });
         Object.keys(dayMap).forEach(function(k) {
           var row = dayMap[k];
-          var eff = (row.hasEnergy && row.energyKwh > 0) ? row.distKm / row.energyKwh : null;
+          var eff = (row.hasEnergy && row.energyKwh >= 0.1) ? row.distKm / row.energyKwh : null;
           _dailyRows.push({
             devName:   row.devName,
             date:      row.date,
@@ -945,7 +945,7 @@ geotab.addin.yusenEvMonitor = function() {
         durStr = h + 'h ' + m + 'm';
       }
 
-      var energyCell = r.energyKwh === null
+      var energyCell = (r.energyKwh === null || r.energyKwh < 0.01)
         ? '<td style="' + TD_NA + bg + '">N/A</td>'
         : '<td style="' + TD_CTR + bg + 'color:#217346;font-weight:700;">' + r.energyKwh.toFixed(2) + '</td>';
 
@@ -1089,7 +1089,7 @@ geotab.addin.yusenEvMonitor = function() {
         ? '<td style="' + TD_NA + bg + '">N/A</td>'
         : '<td style="' + TD_CTR + bg + '">' + r.distKm.toFixed(1) + '</td>';
 
-      var kwhCell = r.energyKwh === null
+      var kwhCell = (r.energyKwh === null || r.energyKwh < 0.1)
         ? '<td style="' + TD_NA + bg + '">N/A</td>'
         : '<td style="' + TD_CTR + bg + 'color:#217346;font-weight:700;">' + r.energyKwh.toFixed(2) + '</td>';
 
