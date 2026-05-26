@@ -31,6 +31,13 @@
       "menuName": {
         "en": "Yusen EV Monitor"
       }
+    },
+    {
+      "url": "https://sonyadam27.github.io/fuel-usage-addin/addin_files/socChargingReport.html",
+      "path": "ActivityLink/",
+      "menuName": {
+        "en": "SOC Charging Report"
+      }
     }
   ]
 }

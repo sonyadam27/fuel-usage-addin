@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC Charging Report</title>
+<style>
+@keyframes scr-spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="scr-root" style="font-family:Calibri,Arial,sans-serif;max-width:1600px;margin:0 auto;color:#222;box-sizing:border-box;border:2px solid #1F4E79;border-radius:10px;box-shadow:0 4px 20px rgba(31,78,121,.3);background:#fff;overflow:hidden">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:3px solid #163960">
+    <div>
+      <h1 style="margin:0;font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px;text-shadow:0 2px 6px rgba(0,0,0,.3)">&#9889; SOC Charging Report</h1>
+      <div style="font-size:14px;color:#fff;opacity:.9;margin-top:4px;font-weight:600">Database: <strong id="scr-dbname">&#8212;</strong></div>
+    </div>
+    <div id="scr-updated" style="font-size:12px;color:rgba(255,255,255,.8)"></div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div style="background:#163960;display:flex;gap:0;border-bottom:2px solid #1F4E79">
+    <button id="scr-tab-soc" onclick="scrTab('soc')" style="padding:10px 24px;background:#2E75B6;color:#fff;border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9899; Fleet SOC</button>
+    <button id="scr-tab-charge" onclick="scrTab('charge')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;border-right:1px solid #1F4E79;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#9875; Charging Events</button>
+    <button id="scr-tab-usage" onclick="scrTab('usage')" style="padding:10px 24px;background:transparent;color:rgba(255,255,255,.7);border:none;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">&#128197; Energy Usage</button>
+  </div>
+
+  <!-- Controls -->
+  <div style="background:linear-gradient(180deg,#EBF3FB 0%,#D6E8F5 100%);border-left:4px solid #1F4E79;border-bottom:1px solid #B8CCE4;padding:14px 20px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Date Range</label>
+      <select id="scr-window" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff">
+        <option value="24">Today (24 hours)</option>
+        <option value="48">Last 48 hours</option>
+        <option value="168">Last 7 days</option>
+        <option value="720">Last 30 days</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Battery Capacity (kWh)</label>
+      <input id="scr-battery" type="number" value="51" min="1" max="300" step="0.1" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:100px">
+    </div>
+    <button id="scr-load" onclick="scrLoad()" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">&#8635; Load / Refresh</button>
+    <button id="scr-export" onclick="scrExport()" disabled style="padding:8px 22px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;opacity:.5">&#8659; Export CSV</button>
+    <div id="scr-spinner" style="display:none;width:22px;height:22px;border:3px solid #B8CCE4;border-top-color:#1F4E79;border-radius:50%;animation:scr-spin .8s linear infinite"></div>
+  </div>
+
+  <!-- Summary Cards: Fleet SOC -->
+  <div id="scr-cards-soc" style="display:flex;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Vehicles</div>
+      <div id="scr-card-total" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">EVs tracked</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg State of Charge</div>
+      <div id="scr-card-avgsoc" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">fleet average %</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #217346;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#217346;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Charging Now</div>
+      <div id="scr-card-charging" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #7f6000;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#7f6000;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Medium SoC (20–50%)</div>
+      <div id="scr-card-mid" style="font-size:28px;font-weight:800;color:#7f6000;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #c00;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#c00;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Low SoC Alert (&lt;20%)</div>
+      <div id="scr-card-low" style="font-size:28px;font-weight:800;color:#c00;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">vehicles</div>
+    </div>
+  </div>
+
+  <!-- Summary Cards: Charging Events -->
+  <div id="scr-cards-charge" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total Sessions</div>
+      <div id="scr-card-sessions" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">charge events</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #217346;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#217346;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Total kWh Added</div>
+      <div id="scr-card-kwhtotal" style="font-size:28px;font-weight:800;color:#217346;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg Session kWh</div>
+      <div id="scr-card-kwhavg" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">per session</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg &#916;SoC Gained</div>
+      <div id="scr-card-deltasoc" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">% per session</div>
+    </div>
+  </div>
+
+  <!-- Summary Cards: Energy Usage -->
+  <div id="scr-cards-usage" style="display:none;gap:14px;padding:16px 20px;background:#EBF3FB;border-bottom:1px solid #B8CCE4;flex-wrap:wrap">
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Fleet Total kWh Used</div>
+      <div id="scr-card-fleetkwh" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">kWh consumed</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Avg kWh / Vehicle</div>
+      <div id="scr-card-avgkwh" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">per vehicle</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #c00;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#c00;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Top Consumer</div>
+      <div id="scr-card-top" style="font-size:16px;font-weight:800;color:#c00;line-height:1.3">&#8212;</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">most kWh used</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border:2px solid #1F4E79;border-radius:8px;padding:14px 18px;text-align:center;box-shadow:0 2px 8px rgba(31,78,121,.12)">
+      <div style="font-size:11px;color:#1F4E79;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Discharge Events</div>
+      <div id="scr-card-events" style="font-size:28px;font-weight:800;color:#1F4E79;line-height:1.1">0</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">SoC drop readings</div>
+    </div>
+  </div>
+
+  <!-- Fleet SOC Panel -->
+  <div id="scr-panel-soc" style="display:block;padding:18px 20px">
+    <div id="scr-msg-soc" style="color:#888;font-style:italic;padding:20px 0">Click Load / Refresh to fetch data.</div>
+    <div style="overflow-x:auto">
+      <table id="scr-tbl-soc" style="display:none;width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">SoC (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Status</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Charge State</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Last Reading</th>
+          </tr>
+        </thead>
+        <tbody id="scr-body-soc"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charging Events Panel -->
+  <div id="scr-panel-charge" style="display:none;padding:18px 20px">
+    <div id="scr-msg-charge" style="color:#888;font-style:italic;padding:20px 0">Click Load / Refresh to fetch data.</div>
+    <div style="overflow-x:auto">
+      <table id="scr-tbl-charge" style="display:none;width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Start Time</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">End Time</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Duration</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Start SoC (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">End SoC (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">&#916;SoC (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Est. kWh Added</th>
+          </tr>
+        </thead>
+        <tbody id="scr-body-charge"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Energy Usage Panel -->
+  <div id="scr-panel-usage" style="display:none;padding:18px 20px">
+    <div id="scr-msg-usage" style="color:#888;font-style:italic;padding:20px 0">Click Load / Refresh to fetch data.</div>
+    <div style="overflow-x:auto">
+      <table id="scr-tbl-usage" style="display:none;width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">EV Energy Usage (kWh)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Discharge Events</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Total SoC Drop (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Avg Drop / Event (%)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Latest SoC (%)</th>
+          </tr>
+        </thead>
+        <tbody id="scr-body-usage"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#163960;color:rgba(255,255,255,.7);padding:10px 20px;font-size:11px;text-align:center;border-top:2px solid #1F4E79">
+    SOC Charging Report v1.0.0 &nbsp;&bull;&nbsp; Powered by Geotab &nbsp;&bull;&nbsp; sonyadam@geotab.com
+  </div>
+</div>
+
+<script>
+(function() {
+  var DIAG_SOC    = 'DiagnosticStateOfChargeId';
+  var DIAG_CHARGE = 'DiagnosticElectricVehicleChargingStateId';
+
+  var S = {
+    api: null,
+    db: null,
+    devices: {},
+    chargeEvents: [],
+    usageData: [],
+    activeTab: 'soc',
+    timer: null
+  };
+
+  // ---- Tab switching ----
+  window.scrTab = function(tab) {
+    S.activeTab = tab;
+    ['soc','charge','usage'].forEach(function(t) {
+      var btn   = document.getElementById('scr-tab-'+t);
+      var panel = document.getElementById('scr-panel-'+t);
+      var cards = document.getElementById('scr-cards-'+t);
+      var on = t === tab;
+      btn.style.background = on ? '#2E75B6' : 'transparent';
+      btn.style.color = on ? '#fff' : 'rgba(255,255,255,.7)';
+      panel.style.display = on ? 'block' : 'none';
+      cards.style.display = on ? 'flex' : 'none';
+    });
+  };
+
+  // ---- Helpers ----
+  function fmt(d) {
+    if (!d) return '&#8212;';
+    var dt = typeof d === 'string' ? new Date(d) : d;
+    return dt.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+
+  function fmtDur(ms) {
+    if (!ms || ms < 0) return '&#8212;';
+    var s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
+    if (h > 0) return h+'h '+m+'m';
+    if (m > 0) return m+'m '+sc+'s';
+    return sc+'s';
+  }
+
+  function normSoc(v) {
+    if (v === null || v === undefined || isNaN(+v)) return null;
+    v = +v;
+    return v <= 1 ? v * 100 : v;
+  }
+
+  function socColor(p) {
+    if (p === null) return '#888';
+    return p < 20 ? '#c00' : p < 50 ? '#7f6000' : '#217346';
+  }
+
+  function altRow(i) { return i % 2 === 0 ? '#fff' : '#deeaf1'; }
+
+  function td(txt, center, color) {
+    var s = 'padding:8px 12px;border-bottom:1px solid #dce9f3;';
+    if (center) s += 'text-align:center;';
+    if (color)  s += 'color:'+color+';font-weight:700;';
+    return '<td style="'+s+'">'+(txt !== null && txt !== undefined ? txt : '&#8212;')+'</td>';
+  }
+
+  function resolveDb(api, state) {
+    try { if (state && state.database) return state.database; } catch(e) {}
+    try { if (window.geotab && geotab.database) return geotab.database; } catch(e) {}
+    var m = location.href.match(/my\.geotab\.com\/([^\/\#\?]+)/);
+    if (m) return m[1];
+    m = location.hash.match(/addin-([^_]+)_/);
+    if (m) return m[1];
+    return null;
+  }
+
+  function setMsg(tab, msg) { document.getElementById('scr-msg-'+tab).innerHTML = msg; }
+  function done() {
+    document.getElementById('scr-spinner').style.display = 'none';
+    document.getElementById('scr-load').disabled = false;
+  }
+
+  // ---- Load ----
+  window.scrLoad = function() {
+    if (!S.api) { alert('API not ready — please wait and try again.'); return; }
+    var hours   = parseInt(document.getElementById('scr-window').value, 10);
+    var battKwh = parseFloat(document.getElementById('scr-battery').value) || 51;
+    var now     = new Date();
+    var from    = new Date(now.getTime() - hours * 3600000);
+
+    document.getElementById('scr-spinner').style.display = 'block';
+    document.getElementById('scr-load').disabled = true;
+
+    S.api.call('Get', { typeName: 'Device', resultsLimit: 1000 }, function(devs) {
+      var devMap = {};
+      (devs || []).forEach(function(d) { devMap[d.id] = d.name || d.id; });
+      S.devices = devMap;
+
+      S.api.call('Get', {
+        typeName: 'StatusData',
+        search: { fromDate: from.toISOString(), toDate: now.toISOString(), diagnosticSearch: { id: DIAG_SOC } },
+        resultsLimit: 50000
+      }, function(socRecs) {
+        socRecs = socRecs || [];
+
+        S.api.call('Get', {
+          typeName: 'ChargeEvent',
+          search: { fromDate: from.toISOString(), toDate: now.toISOString() },
+          resultsLimit: 10000
+        }, function(chargeRecs) {
+          chargeRecs = chargeRecs || [];
+
+          S.api.call('Get', {
+            typeName: 'StatusData',
+            search: { fromDate: from.toISOString(), toDate: now.toISOString(), diagnosticSearch: { id: DIAG_CHARGE } },
+            resultsLimit: 50000
+          }, function(chgRecs) {
+            process(socRecs, chargeRecs, chgRecs || [], devMap, battKwh, now);
+          }, function() { process(socRecs, chargeRecs, [], devMap, battKwh, now); });
+        }, function() { process(socRecs, [], [], devMap, battKwh, now); });
+      }, function(e) { setMsg('soc', 'Error: '+(e&&e.message||e)); done(); });
+    }, function(e) { setMsg('soc', 'Error loading devices: '+(e&&e.message||e)); done(); });
+  };
+
+  // ---- Process all data ----
+  function process(socRecs, chargeRecs, chgRecs, devMap, battKwh, now) {
+
+    // === FLEET SOC ===
+    var latestSoc = {}, latestSocDt = {}, latestChgState = {}, latestChgT = {};
+    socRecs.forEach(function(r) {
+      var did = r.device && r.device.id; if (!did) return;
+      var t = new Date(r.dateTime).getTime();
+      if (!latestSocDt[did] || t > latestSocDt[did]) {
+        latestSocDt[did] = t;
+        latestSoc[did] = normSoc(r.data);
+        latestSocDt[did+'_s'] = r.dateTime;
+      }
+    });
+    chgRecs.forEach(function(r) {
+      var did = r.device && r.device.id; if (!did) return;
+      var t = new Date(r.dateTime).getTime();
+      if (!latestChgT[did] || t > latestChgT[did]) {
+        latestChgT[did] = t;
+        latestChgState[did] = r.data;
+      }
+    });
+
+    var socRows = [];
+    Object.keys(devMap).forEach(function(did) {
+      if (latestSoc[did] !== undefined) {
+        socRows.push({ id: did, name: devMap[did], soc: latestSoc[did], lastTime: latestSocDt[did+'_s'], chgState: latestChgState[did] });
+      }
+    });
+    socRows.sort(function(a,b) { return (a.soc === null ? 999 : a.soc) - (b.soc === null ? 999 : b.soc); });
+    renderSoc(socRows);
+
+    // === CHARGING EVENTS ===
+    var chargeRows = (chargeRecs || []).map(function(r) {
+      var did = r.device && r.device.id;
+      var ss = normSoc(r.startStateOfCharge);
+      var es = normSoc(r.endStateOfCharge);
+      var delta = (ss !== null && es !== null) ? (es - ss) : null;
+      var kwh   = (delta !== null && delta > 0) ? +((delta / 100) * battKwh).toFixed(3) : null;
+      var ms    = r.startTime && r.endTime ? new Date(r.endTime) - new Date(r.startTime) : null;
+      return { name: devMap[did] || did, startTime: r.startTime, endTime: r.endTime, ms: ms, ss: ss, es: es, delta: delta, kwh: kwh };
+    }).filter(function(r) { return r.delta !== null && r.delta > 0; });
+    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
+    S.chargeEvents = chargeRows;
+    renderCharge(chargeRows);
+
+    // === ENERGY USAGE (kWh) — same logic as Excel column O ===
+    var byDevice = {};
+    socRecs.forEach(function(r) {
+      var did = r.device && r.device.id;
+      if (!did || !devMap[did]) return;
+      if (!byDevice[did]) byDevice[did] = [];
+      byDevice[did].push({ t: new Date(r.dateTime).getTime(), soc: normSoc(r.data) });
+    });
+    var usageRows = [];
+    Object.keys(byDevice).forEach(function(did) {
+      var recs = byDevice[did].sort(function(a,b) { return a.t - b.t; });
+      var totalDrop = 0, events = 0;
+      for (var i = 1; i < recs.length; i++) {
+        if (recs[i-1].soc === null || recs[i].soc === null) continue;
+        var drop = recs[i-1].soc - recs[i].soc;
+        if (drop > 0) { totalDrop += drop; events++; }
+      }
+      usageRows.push({
+        name: devMap[did],
+        kwhUsed: +((totalDrop / 100) * battKwh).toFixed(3),
+        events: events,
+        totalDrop: +totalDrop.toFixed(2),
+        avgDrop: events > 0 ? +(totalDrop / events).toFixed(2) : 0,
+        latestSoc: latestSoc[did] !== undefined ? latestSoc[did] : null
+      });
+    });
+    usageRows.sort(function(a,b) { return b.kwhUsed - a.kwhUsed; });
+    S.usageData = usageRows;
+    renderUsage(usageRows);
+
+    document.getElementById('scr-updated').textContent = 'Updated: '+now.toLocaleTimeString();
+    var exp = document.getElementById('scr-export');
+    exp.disabled = false; exp.style.opacity = '1';
+    done();
+  }
+
+  // ---- Render: Fleet SOC ----
+  function renderSoc(rows) {
+    var socVals = rows.map(function(r){return r.soc;}).filter(function(v){return v!==null;});
+    var avg = socVals.length ? (socVals.reduce(function(a,b){return a+b;},0)/socVals.length).toFixed(1) : null;
+    var charging = rows.filter(function(r){return r.chgState===1||r.chgState===2;}).length;
+    var low = rows.filter(function(r){return r.soc!==null&&r.soc<20;}).length;
+    var mid = rows.filter(function(r){return r.soc!==null&&r.soc>=20&&r.soc<50;}).length;
+
+    document.getElementById('scr-card-total').textContent   = rows.length || '&#8212;';
+    document.getElementById('scr-card-avgsoc').textContent  = avg !== null ? avg+'%' : '&#8212;';
+    document.getElementById('scr-card-charging').textContent = charging;
+    document.getElementById('scr-card-low').textContent      = low;
+    document.getElementById('scr-card-mid').textContent      = mid;
+
+    if (!rows.length) { setMsg('soc','No SOC data found for selected period.'); return; }
+    setMsg('soc','');
+    document.getElementById('scr-tbl-soc').style.display = 'table';
+
+    var CHG_LABEL = {0:'Not Charging',1:'Charging',2:'Fully Charged',3:'Fault'};
+    var CHG_COLOR = {0:'#888',1:'#217346',2:'#2E75B6',3:'#c00'};
+
+    document.getElementById('scr-body-soc').innerHTML = rows.map(function(r,i) {
+      var bg  = altRow(i);
+      var soc = r.soc !== null ? r.soc.toFixed(1) : null;
+      var badge = soc !== null
+        ? '<span style="background:'+socColor(r.soc)+';color:#fff;padding:3px 12px;border-radius:12px;font-weight:700;font-size:12px">'+soc+'%</span>'
+        : '&#8212;';
+      var statusTxt = r.soc===null ? '&#8212;' : r.soc<20 ? 'LOW' : r.soc<50 ? 'MEDIUM' : 'GOOD';
+      var dot = r.soc!==null ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+socColor(r.soc)+';margin-right:5px"></span>' : '';
+      var chgLabel = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_LABEL[r.chgState]||r.chgState) : '&#8212;';
+      var chgColor = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_COLOR[r.chgState]||'#888') : '#888';
+      return '<tr style="background:'+bg+'">'
+        + td(i+1, true)
+        + td('<strong>'+r.name+'</strong>')
+        + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'+badge+'</td>'
+        + td(dot+statusTxt, true, r.soc!==null?socColor(r.soc):null)
+        + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center;color:'+chgColor+';font-weight:700">'+chgLabel+'</td>'
+        + td(fmt(r.lastTime))
+        +'</tr>';
+    }).join('');
+  }
+
+  // ---- Render: Charging Events ----
+  function renderCharge(rows) {
+    var totalKwh = rows.reduce(function(a,r){return a+(r.kwh||0);},0);
+    var avgKwh   = rows.length ? totalKwh/rows.length : 0;
+    var deltas   = rows.map(function(r){return r.delta;}).filter(function(v){return v!==null;});
+    var avgDelta = deltas.length ? deltas.reduce(function(a,b){return a+b;},0)/deltas.length : 0;
+
+    document.getElementById('scr-card-sessions').textContent  = rows.length;
+    document.getElementById('scr-card-kwhtotal').textContent  = rows.length ? totalKwh.toFixed(2) : '&#8212;';
+    document.getElementById('scr-card-kwhavg').textContent    = rows.length ? avgKwh.toFixed(2) : '&#8212;';
+    document.getElementById('scr-card-deltasoc').textContent  = rows.length ? avgDelta.toFixed(1)+'%' : '&#8212;';
+
+    if (!rows.length) { setMsg('charge','No charging events found for selected period.'); return; }
+    setMsg('charge','');
+    document.getElementById('scr-tbl-charge').style.display = 'table';
+
+    document.getElementById('scr-body-charge').innerHTML = rows.map(function(r,i) {
+      var bg = altRow(i);
+      return '<tr style="background:'+bg+'">'
+        + td(i+1, true)
+        + td('<strong>'+r.name+'</strong>')
+        + td(fmt(r.startTime))
+        + td(fmt(r.endTime))
+        + td(fmtDur(r.ms), true)
+        + td(r.ss!==null ? r.ss.toFixed(1)+'%' : null, true)
+        + td(r.es!==null ? r.es.toFixed(1)+'%' : null, true)
+        + td(r.delta!==null ? '<span style="color:#217346;font-weight:700">+'+r.delta.toFixed(1)+'%</span>' : null, true)
+        + td(r.kwh!==null ? '<strong style="color:#1F4E79">'+r.kwh.toFixed(3)+'</strong>' : null, true)
+        +'</tr>';
+    }).join('');
+  }
+
+  // ---- Render: Energy Usage ----
+  function renderUsage(rows) {
+    var totalKwh  = rows.reduce(function(a,r){return a+r.kwhUsed;},0);
+    var avgKwh    = rows.length ? totalKwh/rows.length : 0;
+    var topVeh    = rows.length ? rows[0].name : '&#8212;';
+    var totalEvt  = rows.reduce(function(a,r){return a+r.events;},0);
+
+    document.getElementById('scr-card-fleetkwh').textContent = rows.length ? totalKwh.toFixed(2) : '&#8212;';
+    document.getElementById('scr-card-avgkwh').textContent   = rows.length ? avgKwh.toFixed(2) : '&#8212;';
+    document.getElementById('scr-card-top').textContent      = topVeh;
+    document.getElementById('scr-card-events').textContent   = totalEvt;
+
+    if (!rows.length) { setMsg('usage','No usage data found for selected period.'); return; }
+    setMsg('usage','');
+    document.getElementById('scr-tbl-usage').style.display = 'table';
+
+    var maxKwh = rows[0].kwhUsed || 1;
+    document.getElementById('scr-body-usage').innerHTML = rows.map(function(r,i) {
+      var bg  = altRow(i);
+      var pct = Math.round((r.kwhUsed / maxKwh) * 100);
+      var bar = '<div style="display:flex;align-items:center;gap:8px;justify-content:center">'
+              + '<strong style="color:#1F4E79;min-width:50px;text-align:right">'+r.kwhUsed.toFixed(2)+'</strong>'
+              + '<div style="background:#dce9f3;border-radius:4px;overflow:hidden;height:8px;width:80px">'
+              + '<div style="height:8px;background:#2E75B6;width:'+pct+'%"></div></div></div>';
+      var socBadge = r.latestSoc !== null
+        ? '<span style="background:'+socColor(r.latestSoc)+';color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">'+r.latestSoc.toFixed(1)+'%</span>'
+        : '&#8212;';
+      return '<tr style="background:'+bg+'">'
+        + td(i+1, true)
+        + td('<strong>'+r.name+'</strong>')
+        + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3">'+bar+'</td>'
+        + td(r.events, true)
+        + td(r.totalDrop.toFixed(1)+'%', true)
+        + td(r.events ? r.avgDrop.toFixed(1)+'%' : '&#8212;', true)
+        + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'+socBadge+'</td>'
+        +'</tr>';
+    }).join('');
+  }
+
+  // ---- Export CSV ----
+  window.scrExport = function() {
+    var tab = S.activeTab, lines = [], fn = '';
+    if (tab === 'soc') {
+      lines = ['#,Vehicle,SoC (%),Status,Last Reading'];
+      document.querySelectorAll('#scr-body-soc tr').forEach(function(r,i) {
+        var c = r.querySelectorAll('td');
+        lines.push([i+1, '"'+(c[1]&&c[1].innerText||'')+'"', c[2]&&c[2].innerText||'', c[3]&&c[3].innerText||'', c[5]&&c[5].innerText||''].join(','));
+      });
+      fn = 'fleet_soc.csv';
+    } else if (tab === 'charge') {
+      lines = ['#,Vehicle,Start Time,End Time,Duration,Start SoC (%),End SoC (%),Delta SoC (%),Est kWh Added'];
+      S.chargeEvents.forEach(function(r,i) {
+        lines.push([i+1,'"'+r.name+'"',r.startTime||'',r.endTime||'',fmtDur(r.ms).replace('&#8212;',''),
+          r.ss!==null?r.ss.toFixed(1):'', r.es!==null?r.es.toFixed(1):'',
+          r.delta!==null?r.delta.toFixed(1):'', r.kwh!==null?r.kwh.toFixed(3):''
+        ].join(','));
+      });
+      fn = 'charging_events.csv';
+    } else {
+      lines = ['#,Vehicle,EV Energy Usage (kWh),Discharge Events,Total SoC Drop (%),Avg Drop per Event (%),Latest SoC (%)'];
+      S.usageData.forEach(function(r,i) {
+        lines.push([i+1,'"'+r.name+'"',r.kwhUsed.toFixed(2),r.events,r.totalDrop,r.avgDrop,
+          r.latestSoc!==null?r.latestSoc.toFixed(1):''
+        ].join(','));
+      });
+      fn = 'energy_usage.csv';
+    }
+    var blob = new Blob([lines.join('\n')], {type:'text/csv'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fn; a.click();
+  };
+
+  // ---- Lifecycle ----
+  window.geotab = window.geotab || {};
+  geotab.addin = geotab.addin || {};
+  geotab.addin.socChargingReport = function() {
+    return {
+      initialize: function(api, state, cb) {
+        S.api = api;
+        var db = resolveDb(api, state);
+        if (db) {
+          document.getElementById('scr-dbname').textContent = db;
+        } else {
+          try {
+            api.getSession(function(s) {
+              if (s && s.database) document.getElementById('scr-dbname').textContent = s.database;
+            });
+          } catch(e) {}
+        }
+        scrTab('soc');
+        if (cb) cb();
+      },
+      focus: function(api, state) {
+        S.api = api;
+        scrLoad();
+        S.timer = setInterval(scrLoad, 60000);
+      },
+      blur: function() {
+        if (S.timer) { clearInterval(S.timer); S.timer = null; }
+      }
+    };
+  };
+})();
+</script>
+</body>
+</html>
