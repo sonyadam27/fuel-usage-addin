@@ -42,6 +42,13 @@
       <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Battery Capacity (kWh)</label>
       <input id="scr-battery" type="number" value="51" min="1" max="300" step="0.1" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:100px">
     </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Vehicle</label>
+      <div style="display:flex;align-items:center;gap:4px">
+        <input id="scr-vfilter" type="text" placeholder="Filter by name..." oninput="scrApplyFilter()" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:160px">
+        <button onclick="document.getElementById('scr-vfilter').value='';scrApplyFilter()" title="Clear filter" style="padding:6px 9px;background:#dce9f3;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#1F4E79;cursor:pointer;font-weight:700;line-height:1">&#215;</button>
+      </div>
+    </div>
     <button id="scr-load" onclick="scrLoad()" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">&#8635; Load / Refresh</button>
     <button id="scr-export" onclick="scrExport()" disabled style="padding:8px 22px;background:#217346;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;opacity:.5">&#8659; Export CSV</button>
     <div id="scr-spinner" style="display:none;width:22px;height:22px;border:3px solid #B8CCE4;border-top-color:#1F4E79;border-radius:50%;animation:scr-spin .8s linear infinite"></div>
@@ -203,6 +210,9 @@
     api: null,
     db: null,
     devices: {},
+    socRowsAll: [],
+    chargeEventsAll: [],
+    usageDataAll: [],
     chargeEvents: [],
     usageData: [],
     activeTab: 'soc',
@@ -347,7 +357,7 @@
       }
     });
     socRows.sort(function(a,b) { return (a.soc === null ? 999 : a.soc) - (b.soc === null ? 999 : b.soc); });
-    renderSoc(socRows);
+    S.socRowsAll = socRows;
 
     // === CHARGING EVENTS ===
     var chargeRows = (chargeRecs || []).map(function(r) {
@@ -360,8 +370,7 @@
       return { name: devMap[did] || did, startTime: r.startTime, endTime: r.endTime, ms: ms, ss: ss, es: es, delta: delta, kwh: kwh };
     }).filter(function(r) { return r.delta !== null && r.delta > 0; });
     chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
-    S.chargeEvents = chargeRows;
-    renderCharge(chargeRows);
+    S.chargeEventsAll = chargeRows;
 
     // === ENERGY USAGE (kWh) — same logic as Excel column O ===
     var byDevice = {};
@@ -390,9 +399,9 @@
       });
     });
     usageRows.sort(function(a,b) { return b.kwhUsed - a.kwhUsed; });
-    S.usageData = usageRows;
-    renderUsage(usageRows);
+    S.usageDataAll = usageRows;
 
+    scrApplyFilter();
     document.getElementById('scr-updated').textContent = 'Updated: '+now.toLocaleTimeString();
     var exp = document.getElementById('scr-export');
     exp.disabled = false; exp.style.opacity = '1';
@@ -511,6 +520,20 @@
         +'</tr>';
     }).join('');
   }
+
+  // ---- Vehicle filter ----
+  window.scrApplyFilter = function() {
+    var q = (document.getElementById('scr-vfilter').value || '').trim().toLowerCase();
+    var ok = q ? function(r) { return r.name.toLowerCase().indexOf(q) !== -1; } : function() { return true; };
+    var filtSoc    = S.socRowsAll.filter(ok);
+    var filtCharge = S.chargeEventsAll.filter(ok);
+    var filtUsage  = S.usageDataAll.filter(ok);
+    S.chargeEvents = filtCharge;
+    S.usageData    = filtUsage;
+    renderSoc(filtSoc);
+    renderCharge(filtCharge);
+    renderUsage(filtUsage);
+  };
 
   // ---- Export CSV ----
   window.scrExport = function() {
