@@ -422,7 +422,7 @@
     document.getElementById('scr-card-low').textContent      = low;
     document.getElementById('scr-card-mid').textContent      = mid;
 
-    if (!rows.length) { setMsg('soc','No SOC data found for selected period.'); return; }
+    if (!rows.length) { document.getElementById('scr-tbl-soc').style.display='none'; document.getElementById('scr-body-soc').innerHTML=''; setMsg('soc','No SOC data found for selected period.'); return; }
     setMsg('soc','');
     document.getElementById('scr-tbl-soc').style.display = 'table';
 
@@ -462,7 +462,7 @@
     document.getElementById('scr-card-kwhavg').textContent    = rows.length ? avgKwh.toFixed(2) : '&#8212;';
     document.getElementById('scr-card-deltasoc').textContent  = rows.length ? avgDelta.toFixed(1)+'%' : '&#8212;';
 
-    if (!rows.length) { setMsg('charge','No charging events found for selected period.'); return; }
+    if (!rows.length) { document.getElementById('scr-tbl-charge').style.display='none'; document.getElementById('scr-body-charge').innerHTML=''; setMsg('charge','No charging events found for selected period.'); return; }
     setMsg('charge','');
     document.getElementById('scr-tbl-charge').style.display = 'table';
 
@@ -494,7 +494,7 @@
     document.getElementById('scr-card-top').textContent      = topVeh;
     document.getElementById('scr-card-events').textContent   = totalEvt;
 
-    if (!rows.length) { setMsg('usage','No usage data found for selected period.'); return; }
+    if (!rows.length) { document.getElementById('scr-tbl-usage').style.display='none'; document.getElementById('scr-body-usage').innerHTML=''; setMsg('usage','No usage data found for selected period.'); return; }
     setMsg('usage','');
     document.getElementById('scr-tbl-usage').style.display = 'table';
 
