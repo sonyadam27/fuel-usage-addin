@@ -327,6 +327,38 @@
     }, function(e) { setMsg('soc', 'Error loading devices: '+(e&&e.message||e)); done(); });
   };
 
+  // ---- Detect charging sessions from SoC increases (fallback for vehicles without ChargeEvent) ----
+  function detectSocChargingSessions(recs, battKwh) {
+    var sessions = [];
+    if (recs.length < 2) return sessions;
+    var GAP_MS   = 2 * 60 * 60 * 1000; // 2h gap = new session
+    var MIN_DELTA = 1.0;                 // ignore < 1% SoC gain
+    var NOISE     = 0.5;                 // ignore drops <= 0.5% (sensor noise)
+    var i = 0;
+    while (i < recs.length - 1) {
+      var start = null;
+      for (var j = i; j < recs.length - 1; j++) {
+        if (recs[j].soc === null || recs[j+1].soc === null) continue;
+        if ((recs[j+1].soc - recs[j].soc) > NOISE && (recs[j+1].t - recs[j].t) < GAP_MS) { start = j; break; }
+      }
+      if (start === null) break;
+      var peak = start + 1, peakSoc = recs[peak].soc, k = peak;
+      while (k < recs.length - 1) {
+        var gp = recs[k+1].t - recs[k].t, ch = recs[k+1].soc - recs[k].soc;
+        if (gp >= GAP_MS || ch < -NOISE) break;
+        k++;
+        if (recs[k].soc !== null && recs[k].soc > peakSoc) { peakSoc = recs[k].soc; peak = k; }
+      }
+      var ss = recs[start].soc, es = recs[peak].soc, delta = +(es - ss).toFixed(2);
+      if (delta >= MIN_DELTA) {
+        sessions.push({ startTime: new Date(recs[start].t).toISOString(), endTime: new Date(recs[peak].t).toISOString(),
+          ms: recs[peak].t - recs[start].t, ss: ss, es: es, delta: delta, kwh: +((delta / 100) * battKwh).toFixed(3) });
+      }
+      i = k + 1;
+    }
+    return sessions;
+  }
+
   // ---- Process all data ----
   function process(socRecs, chargeRecs, chgRecs, devMap, battKwh, now) {
 
@@ -359,7 +391,19 @@
     socRows.sort(function(a,b) { return (a.soc === null ? 999 : a.soc) - (b.soc === null ? 999 : b.soc); });
     S.socRowsAll = socRows;
 
-    // === CHARGING EVENTS ===
+    // Build per-device SoC timeline once — shared by charging detection + energy usage
+    var byDevice = {};
+    socRecs.forEach(function(r) {
+      var did = r.device && r.device.id;
+      if (!did || !devMap[did]) return;
+      if (!byDevice[did]) byDevice[did] = [];
+      byDevice[did].push({ t: new Date(r.dateTime).getTime(), soc: normSoc(r.data) });
+    });
+    Object.keys(byDevice).forEach(function(did) {
+      byDevice[did].sort(function(a,b) { return a.t - b.t; });
+    });
+
+    // === CHARGING EVENTS from ChargeEvent API ===
     var chargeRows = (chargeRecs || []).map(function(r) {
       var did = r.device && r.device.id;
       var ss = normSoc(r.startStateOfCharge);
@@ -370,19 +414,25 @@
       return { name: devMap[did] || did, startTime: r.startTime, endTime: r.endTime, ms: ms, ss: ss, es: es, delta: delta, kwh: kwh };
     }).filter(function(r) { return r.delta !== null && r.delta > 0; });
     chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
+
+    // === CHARGING EVENTS fallback — SoC-based detection for vehicles without ChargeEvent support ===
+    var hasChargeEvents = {};
+    chargeRows.forEach(function(r) { hasChargeEvents[r.name] = true; });
+    Object.keys(byDevice).forEach(function(did) {
+      var name = devMap[did];
+      if (!name || hasChargeEvents[name]) return;
+      var sessions = detectSocChargingSessions(byDevice[did], battKwh);
+      sessions.forEach(function(s) {
+        chargeRows.push({ name: name, estimated: true, startTime: s.startTime, endTime: s.endTime, ms: s.ms, ss: s.ss, es: s.es, delta: s.delta, kwh: s.kwh });
+      });
+    });
+    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
     S.chargeEventsAll = chargeRows;
 
     // === ENERGY USAGE (kWh) — same logic as Excel column O ===
-    var byDevice = {};
-    socRecs.forEach(function(r) {
-      var did = r.device && r.device.id;
-      if (!did || !devMap[did]) return;
-      if (!byDevice[did]) byDevice[did] = [];
-      byDevice[did].push({ t: new Date(r.dateTime).getTime(), soc: normSoc(r.data) });
-    });
     var usageRows = [];
     Object.keys(byDevice).forEach(function(did) {
-      var recs = byDevice[did].sort(function(a,b) { return a.t - b.t; });
+      var recs = byDevice[did]; // pre-sorted
       var totalDrop = 0, events = 0;
       for (var i = 1; i < recs.length; i++) {
         if (recs[i-1].soc === null || recs[i].soc === null) continue;
@@ -452,6 +502,7 @@
 
   // ---- Render: Charging Events ----
   function renderCharge(rows) {
+    var hasEst   = rows.some(function(r) { return r.estimated; });
     var totalKwh = rows.reduce(function(a,r){return a+(r.kwh||0);},0);
     var avgKwh   = rows.length ? totalKwh/rows.length : 0;
     var deltas   = rows.map(function(r){return r.delta;}).filter(function(v){return v!==null;});
@@ -463,14 +514,17 @@
     document.getElementById('scr-card-deltasoc').textContent  = rows.length ? avgDelta.toFixed(1)+'%' : '&#8212;';
 
     if (!rows.length) { document.getElementById('scr-tbl-charge').style.display='none'; document.getElementById('scr-body-charge').innerHTML=''; setMsg('charge','No charging events found for selected period.'); return; }
-    setMsg('charge','');
+    setMsg('charge', hasEst ? '<span style="font-size:12px;color:#7f6000;font-style:normal">&#9432; Rows marked <em>~</em> are estimated from SoC data (vehicle does not report ChargeEvent)</span>' : '');
     document.getElementById('scr-tbl-charge').style.display = 'table';
 
     document.getElementById('scr-body-charge').innerHTML = rows.map(function(r,i) {
       var bg = altRow(i);
+      var nameCell = r.estimated
+        ? '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3"><em style="color:#7f6000">~'+r.name+'</em></td>'
+        : td('<strong>'+r.name+'</strong>');
       return '<tr style="background:'+bg+'">'
         + td(i+1, true)
-        + td('<strong>'+r.name+'</strong>')
+        + nameCell
         + td(fmt(r.startTime))
         + td(fmt(r.endTime))
         + td(fmtDur(r.ms), true)
