@@ -39,7 +39,7 @@
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
-      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Battery Capacity (kWh)</label>
+      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Default Battery (kWh)</label>
       <input id="scr-battery" type="number" value="51" min="1" max="300" step="0.1" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:100px">
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
@@ -140,6 +140,7 @@
           <tr>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Battery (kWh)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">SoC (%)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Status</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Charge State</th>
@@ -216,7 +217,12 @@
     chargeEvents: [],
     usageData: [],
     activeTab: 'soc',
-    timer: null
+    timer: null,
+    byDevice: {},
+    rawChargeRecs: [],
+    devMap: {},
+    latestSoc: {},
+    battKwh: {}
   };
 
   // ---- Tab switching ----
@@ -359,6 +365,73 @@
     return sessions;
   }
 
+  function getBattKwh(deviceId) {
+    return (S.battKwh[deviceId] !== undefined)
+      ? S.battKwh[deviceId]
+      : (parseFloat(document.getElementById('scr-battery').value) || 51);
+  }
+
+  function recompute() {
+    var byDevice   = S.byDevice;
+    var devMap     = S.devMap;
+    var chargeRecs = S.rawChargeRecs;
+
+    var chargeRows = (chargeRecs || []).map(function(r) {
+      var did = r.device && r.device.id;
+      var batt = getBattKwh(did);
+      var ss = normSoc(r.startStateOfCharge);
+      var es = normSoc(r.endStateOfCharge);
+      var delta = (ss !== null && es !== null) ? (es - ss) : null;
+      var kwh   = (delta !== null && delta > 0) ? +((delta / 100) * batt).toFixed(3) : null;
+      var ms    = r.startTime && r.endTime ? new Date(r.endTime) - new Date(r.startTime) : null;
+      return { deviceId: did, name: devMap[did] || did, startTime: r.startTime, endTime: r.endTime, ms: ms, ss: ss, es: es, delta: delta, kwh: kwh };
+    }).filter(function(r) { return r.delta !== null && r.delta > 0; });
+    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
+
+    var hasChargeEvents = {};
+    chargeRows.forEach(function(r) { hasChargeEvents[r.name] = true; });
+    Object.keys(byDevice).forEach(function(did) {
+      var name = devMap[did];
+      if (!name || hasChargeEvents[name]) return;
+      var batt = getBattKwh(did);
+      var sessions = detectSocChargingSessions(byDevice[did], batt);
+      sessions.forEach(function(s) {
+        chargeRows.push({ deviceId: did, name: name, estimated: true, startTime: s.startTime, endTime: s.endTime, ms: s.ms, ss: s.ss, es: s.es, delta: s.delta, kwh: s.kwh });
+      });
+    });
+    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
+    S.chargeEventsAll = chargeRows;
+
+    var usageRows = [];
+    Object.keys(byDevice).forEach(function(did) {
+      var recs = byDevice[did];
+      var batt = getBattKwh(did);
+      var totalDrop = 0, events = 0;
+      for (var i = 1; i < recs.length; i++) {
+        if (recs[i-1].soc === null || recs[i].soc === null) continue;
+        var drop = recs[i-1].soc - recs[i].soc;
+        if (drop > 0) { totalDrop += drop; events++; }
+      }
+      usageRows.push({
+        name: devMap[did],
+        kwhUsed: +((totalDrop / 100) * batt).toFixed(3),
+        events: events,
+        totalDrop: +totalDrop.toFixed(2),
+        avgDrop: events > 0 ? +(totalDrop / events).toFixed(2) : 0,
+        latestSoc: S.latestSoc[did] !== undefined ? S.latestSoc[did] : null
+      });
+    });
+    usageRows.sort(function(a,b) { return b.kwhUsed - a.kwhUsed; });
+    S.usageDataAll = usageRows;
+  }
+
+  window.scrSetBatt = function(deviceId, value) {
+    var v = parseFloat(value);
+    if (!isNaN(v) && v > 0) S.battKwh[deviceId] = v;
+    recompute();
+    scrApplyFilter();
+  };
+
   // ---- Process all data ----
   function process(socRecs, chargeRecs, chgRecs, devMap, battKwh, now) {
 
@@ -403,53 +476,13 @@
       byDevice[did].sort(function(a,b) { return a.t - b.t; });
     });
 
-    // === CHARGING EVENTS from ChargeEvent API ===
-    var chargeRows = (chargeRecs || []).map(function(r) {
-      var did = r.device && r.device.id;
-      var ss = normSoc(r.startStateOfCharge);
-      var es = normSoc(r.endStateOfCharge);
-      var delta = (ss !== null && es !== null) ? (es - ss) : null;
-      var kwh   = (delta !== null && delta > 0) ? +((delta / 100) * battKwh).toFixed(3) : null;
-      var ms    = r.startTime && r.endTime ? new Date(r.endTime) - new Date(r.startTime) : null;
-      return { name: devMap[did] || did, startTime: r.startTime, endTime: r.endTime, ms: ms, ss: ss, es: es, delta: delta, kwh: kwh };
-    }).filter(function(r) { return r.delta !== null && r.delta > 0; });
-    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
+    // Store raw data so per-vehicle battery edits can recompute without a new API call
+    S.byDevice = byDevice;
+    S.rawChargeRecs = chargeRecs;
+    S.devMap = devMap;
+    S.latestSoc = latestSoc;
 
-    // === CHARGING EVENTS fallback — SoC-based detection for vehicles without ChargeEvent support ===
-    var hasChargeEvents = {};
-    chargeRows.forEach(function(r) { hasChargeEvents[r.name] = true; });
-    Object.keys(byDevice).forEach(function(did) {
-      var name = devMap[did];
-      if (!name || hasChargeEvents[name]) return;
-      var sessions = detectSocChargingSessions(byDevice[did], battKwh);
-      sessions.forEach(function(s) {
-        chargeRows.push({ name: name, estimated: true, startTime: s.startTime, endTime: s.endTime, ms: s.ms, ss: s.ss, es: s.es, delta: s.delta, kwh: s.kwh });
-      });
-    });
-    chargeRows.sort(function(a,b) { return new Date(b.startTime) - new Date(a.startTime); });
-    S.chargeEventsAll = chargeRows;
-
-    // === ENERGY USAGE (kWh) — same logic as Excel column O ===
-    var usageRows = [];
-    Object.keys(byDevice).forEach(function(did) {
-      var recs = byDevice[did]; // pre-sorted
-      var totalDrop = 0, events = 0;
-      for (var i = 1; i < recs.length; i++) {
-        if (recs[i-1].soc === null || recs[i].soc === null) continue;
-        var drop = recs[i-1].soc - recs[i].soc;
-        if (drop > 0) { totalDrop += drop; events++; }
-      }
-      usageRows.push({
-        name: devMap[did],
-        kwhUsed: +((totalDrop / 100) * battKwh).toFixed(3),
-        events: events,
-        totalDrop: +totalDrop.toFixed(2),
-        avgDrop: events > 0 ? +(totalDrop / events).toFixed(2) : 0,
-        latestSoc: latestSoc[did] !== undefined ? latestSoc[did] : null
-      });
-    });
-    usageRows.sort(function(a,b) { return b.kwhUsed - a.kwhUsed; });
-    S.usageDataAll = usageRows;
+    recompute();
 
     scrApplyFilter();
     document.getElementById('scr-updated').textContent = 'Updated: '+now.toLocaleTimeString();
@@ -489,9 +522,14 @@
       var dot = r.soc!==null ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+socColor(r.soc)+';margin-right:5px"></span>' : '';
       var chgLabel = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_LABEL[r.chgState]||r.chgState) : '&#8212;';
       var chgColor = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_COLOR[r.chgState]||'#888') : '#888';
+      var battCell = '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'
+        + '<input type="number" value="'+getBattKwh(r.id)+'" min="1" max="300" step="0.1" '
+        + 'style="width:70px;padding:3px 6px;border:1px solid #bcd0e0;border-radius:4px;font-size:12px;text-align:center" '
+        + 'onchange="scrSetBatt(\''+r.id+'\',this.value)"></td>';
       return '<tr style="background:'+bg+'">'
         + td(i+1, true)
         + td('<strong>'+r.name+'</strong>')
+        + battCell
         + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'+badge+'</td>'
         + td(dot+statusTxt, true, r.soc!==null?socColor(r.soc):null)
         + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center;color:'+chgColor+';font-weight:700">'+chgLabel+'</td>'
