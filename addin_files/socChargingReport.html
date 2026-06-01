@@ -638,10 +638,16 @@
   window.scrExport = function() {
     var tab = S.activeTab, lines = [], fn = '';
     if (tab === 'soc') {
-      lines = ['#,Vehicle,SoC (%),Status,Last Reading'];
-      document.querySelectorAll('#scr-body-soc tr').forEach(function(r,i) {
-        var c = r.querySelectorAll('td');
-        lines.push([i+1, '"'+(c[1]&&c[1].innerText||'')+'"', c[2]&&c[2].innerText||'', c[3]&&c[3].innerText||'', c[5]&&c[5].innerText||''].join(','));
+      var q = (document.getElementById('scr-vfilter').value || '').trim().toLowerCase();
+      var filtSoc = q ? S.socRowsAll.filter(function(r){return r.name.toLowerCase().indexOf(q)!==-1;}) : S.socRowsAll;
+      var CHG_LABEL = {0:'Not Charging',1:'Charging',2:'Fully Charged',3:'Fault'};
+      lines = ['#,Vehicle,Serial Number,SoC (%),Status,Charge State,Last Reading'];
+      filtSoc.forEach(function(r,i) {
+        var soc    = r.soc !== null ? r.soc.toFixed(1) : '';
+        var status = r.soc === null ? '' : r.soc < 20 ? 'LOW' : r.soc < 50 ? 'MEDIUM' : 'GOOD';
+        var chg    = (r.chgState !== undefined && r.chgState !== null) ? (CHG_LABEL[r.chgState] || r.chgState) : '';
+        var serial = S.serialMap[r.id] || '';
+        lines.push([i+1, '"'+r.name+'"', '"'+serial+'"', soc, status, chg, r.lastTime||''].join(','));
       });
       fn = 'fleet_soc.csv';
     } else if (tab === 'charge') {
