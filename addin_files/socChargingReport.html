@@ -136,7 +136,7 @@
           <tr>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
-            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Battery (kWh)</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Serial Number</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">SoC (%)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Status</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Charge State</th>
@@ -220,7 +220,8 @@
     rawChargeRecs: [],
     devMap: {},
     latestSoc: {},
-    battKwh: {}
+    battKwh: {},
+    serialMap: {}
   };
 
   // ---- Tab switching ----
@@ -300,9 +301,10 @@
     document.getElementById('scr-load').disabled = true;
 
     S.api.call('Get', { typeName: 'Device', resultsLimit: 1000 }, function(devs) {
-      var devMap = {};
-      (devs || []).forEach(function(d) { devMap[d.id] = d.name || d.id; });
+      var devMap = {}, serialMap = {};
+      (devs || []).forEach(function(d) { devMap[d.id] = d.name || d.id; serialMap[d.id] = d.serialNumber || ''; });
       S.devices = devMap;
+      S.serialMap = serialMap;
 
       S.api.call('Get', {
         typeName: 'StatusData',
@@ -518,10 +520,9 @@
       var dot = r.soc!==null ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+socColor(r.soc)+';margin-right:5px"></span>' : '';
       var chgLabel = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_LABEL[r.chgState]||r.chgState) : '&#8212;';
       var chgColor = (r.chgState!==undefined&&r.chgState!==null) ? (CHG_COLOR[r.chgState]||'#888') : '#888';
-      var battCell = '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'
-        + '<input type="number" value="'+getBattKwh(r.id)+'" min="1" max="300" step="0.1" '
-        + 'style="width:70px;padding:3px 6px;border:1px solid #bcd0e0;border-radius:4px;font-size:12px;text-align:center" '
-        + 'onchange="scrSetBatt(\''+r.id+'\',this.value)"></td>';
+      var battCell = '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center;font-family:monospace;font-size:12px">'
+        + (S.serialMap[r.id] || '&#8212;')
+        + '</td>';
       return '<tr style="background:'+bg+'">'
         + td(i+1, true)
         + td('<strong>'+r.name+'</strong>')
