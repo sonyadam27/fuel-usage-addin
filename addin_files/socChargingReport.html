@@ -39,10 +39,6 @@
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
-      <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Default Battery (kWh)</label>
-      <input id="scr-battery" type="number" value="51" min="1" max="300" step="0.1" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:100px">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px">
       <label style="font-size:12px;font-weight:700;color:#1F4E79;text-transform:uppercase;letter-spacing:.4px">Vehicle</label>
       <div style="display:flex;align-items:center;gap:4px">
         <input id="scr-vfilter" type="text" placeholder="Filter by name..." oninput="scrApplyFilter()" style="padding:7px 10px;border:1px solid #bcd0e0;border-radius:4px;font-size:14px;color:#222;background:#fff;width:160px">
@@ -161,6 +157,7 @@
           <tr>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Battery (kWh)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Start Time</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">End Time</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Duration</th>
@@ -184,6 +181,7 @@
           <tr>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">#</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:left;font-weight:700">Vehicle</th>
+            <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Battery (kWh)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">EV Energy Usage (kWh)</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Discharge Events</th>
             <th style="background:#1F4E79;color:#fff;padding:10px 12px;text-align:center;font-weight:700">Total SoC Drop (%)</th>
@@ -366,9 +364,7 @@
   }
 
   function getBattKwh(deviceId) {
-    return (S.battKwh[deviceId] !== undefined)
-      ? S.battKwh[deviceId]
-      : (parseFloat(document.getElementById('scr-battery').value) || 51);
+    return (S.battKwh[deviceId] !== undefined) ? S.battKwh[deviceId] : 51;
   }
 
   function recompute() {
@@ -413,6 +409,7 @@
         if (drop > 0) { totalDrop += drop; events++; }
       }
       usageRows.push({
+        deviceId: did,
         name: devMap[did],
         kwhUsed: +((totalDrop / 100) * batt).toFixed(3),
         events: events,
@@ -560,9 +557,14 @@
       var nameCell = r.estimated
         ? '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3"><em style="color:#7f6000">~'+r.name+'</em></td>'
         : td('<strong>'+r.name+'</strong>');
+      var chargeBattCell = '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'
+        + '<input type="number" value="'+getBattKwh(r.deviceId)+'" min="1" max="300" step="0.1" '
+        + 'style="width:70px;padding:3px 6px;border:1px solid #bcd0e0;border-radius:4px;font-size:12px;text-align:center" '
+        + 'onchange="scrSetBatt(\''+r.deviceId+'\',this.value)"></td>';
       return '<tr style="background:'+bg+'">'
         + td(i+1, true)
         + nameCell
+        + chargeBattCell
         + td(fmt(r.startTime))
         + td(fmt(r.endTime))
         + td(fmtDur(r.ms), true)
@@ -601,9 +603,14 @@
       var socBadge = r.latestSoc !== null
         ? '<span style="background:'+socColor(r.latestSoc)+';color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">'+r.latestSoc.toFixed(1)+'%</span>'
         : '&#8212;';
+      var usageBattCell = '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3;text-align:center">'
+        + '<input type="number" value="'+getBattKwh(r.deviceId)+'" min="1" max="300" step="0.1" '
+        + 'style="width:70px;padding:3px 6px;border:1px solid #bcd0e0;border-radius:4px;font-size:12px;text-align:center" '
+        + 'onchange="scrSetBatt(\''+r.deviceId+'\',this.value)"></td>';
       return '<tr style="background:'+bg+'">'
         + td(i+1, true)
         + td('<strong>'+r.name+'</strong>')
+        + usageBattCell
         + '<td style="padding:8px 12px;border-bottom:1px solid #dce9f3">'+bar+'</td>'
         + td(r.events, true)
         + td(r.totalDrop.toFixed(1)+'%', true)
