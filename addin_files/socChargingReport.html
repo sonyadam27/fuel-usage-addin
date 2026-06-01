@@ -292,9 +292,8 @@
   // ---- Load ----
   window.scrLoad = function() {
     if (!S.api) { alert('API not ready — please wait and try again.'); return; }
-    var hours   = parseInt(document.getElementById('scr-window').value, 10);
-    var battKwh = parseFloat(document.getElementById('scr-battery').value) || 51;
-    var now     = new Date();
+    var hours = parseInt(document.getElementById('scr-window').value, 10);
+    var now   = new Date();
     var from    = new Date(now.getTime() - hours * 3600000);
 
     document.getElementById('scr-spinner').style.display = 'block';
@@ -324,9 +323,9 @@
             search: { fromDate: from.toISOString(), toDate: now.toISOString(), diagnosticSearch: { id: DIAG_CHARGE } },
             resultsLimit: 50000
           }, function(chgRecs) {
-            process(socRecs, chargeRecs, chgRecs || [], devMap, battKwh, now);
-          }, function() { process(socRecs, chargeRecs, [], devMap, battKwh, now); });
-        }, function() { process(socRecs, [], [], devMap, battKwh, now); });
+            process(socRecs, chargeRecs, chgRecs || [], devMap, now);
+          }, function() { process(socRecs, chargeRecs, [], devMap, now); });
+        }, function() { process(socRecs, [], [], devMap, now); });
       }, function(e) { setMsg('soc', 'Error: '+(e&&e.message||e)); done(); });
     }, function(e) { setMsg('soc', 'Error loading devices: '+(e&&e.message||e)); done(); });
   };
@@ -430,7 +429,7 @@
   };
 
   // ---- Process all data ----
-  function process(socRecs, chargeRecs, chgRecs, devMap, battKwh, now) {
+  function process(socRecs, chargeRecs, chgRecs, devMap, now) {
 
     // === FLEET SOC ===
     var latestSoc = {}, latestSocDt = {}, latestChgState = {}, latestChgT = {};
